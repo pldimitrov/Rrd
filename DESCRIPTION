@@ -1,0 +1,9 @@
+Package: Rrd
+Type: Package
+Title: Import data from a RRD file into R
+Version: 1.0
+Date: 2014-06-01
+Author: Plamen Dimitrov
+Maintainer: Who to complain to <yourfault@somewhere.net>
+Description: More about what it does (maybe more than one line)
+License: What license is it under?
