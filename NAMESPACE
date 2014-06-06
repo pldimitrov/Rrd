@@ -2,4 +2,3 @@ exportPattern("^[[:alpha:]]+")
 
 useDynLib(Rrd)
 
-import(methods)
