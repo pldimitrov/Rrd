@@ -1,4 +1,4 @@
-exportPattern("^[[:alpha:]]+")
-
 useDynLib(Rrd)
+exportPattern("^[^\\.]")
+
 
