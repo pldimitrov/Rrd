@@ -138,7 +138,7 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
     for (int ds = 0; ds < ds_cnt; ds++){
 	vec = PROTECT(allocVector(REALSXP, size));
 	for (int i = 0; i < size; i++){
-	    printf("iterating.. i = %d\n", i);
+	    /*printf("iterating.. i = %d\n", i);*/
 	    /*REAL(out)[i] = *(data)[0][0];*/
 	    /*REAL(out)[i] = data[i];*/
 	    /*REAL(vec)[i] = (&data)[ds][i];*/
