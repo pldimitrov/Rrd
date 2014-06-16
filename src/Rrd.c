@@ -158,5 +158,139 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
 
 
 
+typedef struct _rraInfo {
+    char* cf;
+    unsigned long rows;
+    unsigned long perRow;
+    struct _rraInfo* next;
+} rraInfo; 
+
+
+void freeRraInfo(rraInfo* rraInfoOut) {
+    while (rraInfoOut) {
+	rraInfo* tmp = rraInfoOut;
+	rraInfoOut = rraInfoOut->next;
+	free(tmp);
+
+    }
+    rraInfoOut = NULL;
+}
+
+//TODO return rraCnt as a pass-by-ref
+unsigned long getRraInfo (rraInfo* rraInfoOut, rrd_info_t* rrdInfoIn){
+    unsigned long step = 0;
+    int rraCnt = 0;
+
+    char cfKey[80];
+    char rowsKey[80];
+    char perRowKey[80];
+
+    sprintf(cfKey, "rra[%d].cf", 0);
+    sprintf(rowsKey, "rra[%d].rows", 0);
+    sprintf(perRowKey, "rra[%d].pdp_per_row", 0);
+
+
+    rraInfoOut = malloc(sizeof(rraInfo)); 
+
+    rraInfo *rraInfoTmp = rraInfoOut;
+
+
+
+    while(rrdInfoIn) {
+
+	if (!strcmp(rrdInfoIn->key, "step")){
+	    step = rrdInfoIn->value.u_cnt;
+	}
+
+
+	if (!strcmp(rrdInfoIn->key, cfKey)){
+	    if (rraCnt > 0) {
+		rraInfoTmp->next = malloc(sizeof(rraInfo));
+		rraInfoTmp = rraInfoTmp->next;
+	    }
+
+	    strcpy(rraInfoTmp->cf, rrdInfoIn->value.u_str);
+
+	}
+
+	if (!strcmp(rrdInfoIn->key, rowsKey)){
+	    rraInfoTmp->rows = rrdInfoIn->value.u_cnt;
+
+	}
+
+	if (!strcmp(rrdInfoIn->key, perRowKey)){
+	    rraInfoTmp->perRow = rrdInfoIn->value.u_cnt;
+	    rraCnt ++;
+
+	    sprintf(cfKey, "rra[%d].cf", rraCnt);
+	    sprintf(rowsKey, "rra[%d].rows", rraCnt);
+	    sprintf(perRowKey, "rra[%d].pdp_per_row", rraCnt);
+
+	}
+
+
+	rrdInfoIn = rrdInfoIn->next;
+    }
+
+
+    //TODO check if everything looks allright
+    return step;
+}
+
+
+
+SEXP smartImportRRD(SEXP filenameIn){
+//TODO get info
+//TODO get first and last
+//TODO get identifiers for each rra
+//TODO get info for each DS
+//TODO get resolution and size for each rra
+//TODO get  consolidation function for each rra
+//TODO print all stuff and create a list of (cf, res)->ds
+//TODO stick to row/column convention
+
+    SEXP out;
+
+    time_t first;
+    time_t last;
+
+    const char *filename = CHAR(asChar(filenameIn));
+    rrd_info_t *rrdInfo;
+
+    first = rrd_first_r(filename, 0);
+    last = rrd_last_r(filename);
+    rrdInfo = rrd_info_r(filename);
+
+
+
+
+//TODO write data to SEXP object
+
+
+
+
+
+    
+
+  
+
+	
+
+
+
+
+
+
+
+
+    return out;
+
+}
+
+
+
+
+
+
 
 
