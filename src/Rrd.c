@@ -131,7 +131,7 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
     printf("we just did\n");
     printf("size of data %d start %d end %d step %d ds_cnt %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, step, ds_cnt);
     fflush(stdout);
-    int size = end - start + 1;
+    int size = (end - start)/step;
 
     SEXP out = PROTECT(allocVector(VECSXP, ds_cnt));
     SEXP vec;
@@ -154,4 +154,9 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
 
 
 }
+
+
+
+
+
 
