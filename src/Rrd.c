@@ -255,13 +255,18 @@ SEXP smartImportRRD(SEXP filenameIn){
 //TODO print all stuff and create a list of (cf, res)->ds
 //TODO stick to row/column convention
 
-    SEXP out;
 
     time_t first;
     time_t last;
+    time_t start;
+    time_t end;
+    unsigned long curStep;
+    unsigned long ds_cnt;
 
     unsigned long step;
     int rraCnt;
+    time_t *startAr;
+
     rraInfo* rraInfoList;
 
     const char *filename = CHAR(asChar(filenameIn));
@@ -270,27 +275,41 @@ SEXP smartImportRRD(SEXP filenameIn){
     last = rrd_last_r(filename);
     rrdInfo = rrd_info_r(filename);
 
+
+
     step = getRraInfo(rraInfoList, rrdInfo, &rraCnt);
 
-
-    //TODO do that for each in a loop
-    first = rrd_first_r(filename, 0);
     
     if (rraInfoList == NULL) {
 	//handle error
 
     }
 
+
+    startAr = malloc(rraCnt * sizeof(time_t));
+
+
+    //TODO do that for each in a loop
+    
+    for (int i = 0; i < rraCnt; i++) {
+	startAr[i] = rrd_first_r(filename, i);
+    }
+    
+
     rraInfo* rraInfoTmp = rraInfoList;
+
+    SEXP out = PROTECT(allocVector(VECSXP, rraCnt));
+
+    int i = 0;
 
     while (rraInfoTmp) {
 
 	//TODO move declarations out of the loop
-	time_t start = first;
-	time_t end = last;
-	unsigned long curStep = step * rraInfoTmp->perRow;
-	unsigned long ds_cnt;
+	start = startAr[i];
+	end = last;
+	curStep = step * rraInfoTmp->perRow;
 	char **ds_namv;
+	//TODO how/when do we deallocate the data? is the data copied by value in R?
 	rrd_value_t *data;
 
 
@@ -298,9 +317,11 @@ SEXP smartImportRRD(SEXP filenameIn){
 
 	printf("size of data %d start %d end %d step %d ds_cnt %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, step, ds_cnt);
 	fflush(stdout);
-	int size = (end - start)/step;
 
-	//SEXP out = PROTECT(allocVector(VECSXP, ds_cnt));
+	int size = (end - start)/curStep;
+
+	SEXP rraSexpList = PROTECT(allocVector(VECSXP, ds_cnt));
+
 
 	SEXP vec;
 	//TODO stick to row/columns convention
@@ -312,12 +333,15 @@ SEXP smartImportRRD(SEXP filenameIn){
 	    }
 
 
-	    //SET_VECTOR_ELT(out, ds, vec);
+	  SET_VECTOR_ELT(rraSexpList, ds, vec);
 	}
+
+	SET_VECTOR_ELT(out, i, rraSexpList);
 
 	rraInfoTmp = rraInfoTmp->next;
 
 	//TODO push RRA into RRD class/data structure
+	i++;
     }
 
     //TODO unprotect how many times?
@@ -325,6 +349,7 @@ SEXP smartImportRRD(SEXP filenameIn){
 
 
     freeRraInfo(rraInfoList);
+    //TODO free startAr
 
 
 
