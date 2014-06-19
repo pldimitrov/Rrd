@@ -177,7 +177,7 @@ void freeRraInfo(rraInfo* rraInfoOut) {
 }
 
 //TODO return rraCnt as a pass-by-ref
-unsigned long getRraInfo (rraInfo* rraInfoOut, rrd_info_t* rrdInfoIn){
+unsigned long getRraInfo (rraInfo* rraInfoOut, rrd_info_t* rrdInfoIn, int *rraCntOut){
     unsigned long step = 0;
     int rraCnt = 0;
 
@@ -232,8 +232,14 @@ unsigned long getRraInfo (rraInfo* rraInfoOut, rrd_info_t* rrdInfoIn){
 	rrdInfoIn = rrdInfoIn->next;
     }
 
+    if (rraCnt == 0) {
+	free(rraInfoOut);
+	rraInfoOut = NULL;
+    }
+
 
     //TODO check if everything looks allright
+    *rraCntOut = rraCnt;
     return step;
 }
 
@@ -254,28 +260,78 @@ SEXP smartImportRRD(SEXP filenameIn){
     time_t first;
     time_t last;
 
+    unsigned long step;
+    int rraCnt;
+    rraInfo* rraInfoList;
+
     const char *filename = CHAR(asChar(filenameIn));
     rrd_info_t *rrdInfo;
 
-    first = rrd_first_r(filename, 0);
     last = rrd_last_r(filename);
     rrdInfo = rrd_info_r(filename);
+
+    step = getRraInfo(rraInfoList, rrdInfo, &rraCnt);
+
+
+    //TODO do that for each in a loop
+    first = rrd_first_r(filename, 0);
+    
+    if (rraInfoList == NULL) {
+	//handle error
+
+    }
+
+    rraInfo* rraInfoTmp = rraInfoList;
+
+    while (rraInfoTmp) {
+
+	//TODO move declarations out of the loop
+	time_t start = first;
+	time_t end = last;
+	unsigned long curStep = step * rraInfoTmp->perRow;
+	unsigned long ds_cnt;
+	char **ds_namv;
+	rrd_value_t *data;
+
+
+	int status = rrd_fetch_r(filename, rraInfoTmp->cf, &start, &end, &step, &ds_cnt, &ds_namv, &data);
+
+	printf("size of data %d start %d end %d step %d ds_cnt %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, step, ds_cnt);
+	fflush(stdout);
+	int size = (end - start)/step;
+
+	//SEXP out = PROTECT(allocVector(VECSXP, ds_cnt));
+
+	SEXP vec;
+	//TODO stick to row/columns convention
+	for (int ds = 0; ds < ds_cnt; ds++){
+	    vec = PROTECT(allocVector(REALSXP, size));
+	    for (int i = 0; i < size; i++){
+
+		REAL(vec)[i] = data[i + ds];
+	    }
+
+
+	    //SET_VECTOR_ELT(out, ds, vec);
+	}
+
+	rraInfoTmp = rraInfoTmp->next;
+
+	//TODO push RRA into RRD class/data structure
+    }
+
+    //TODO unprotect how many times?
+
+
+
+    freeRraInfo(rraInfoList);
+
+
 
 
 
 
 //TODO write data to SEXP object
-
-
-
-
-
-    
-
-  
-
-	
-
 
 
 
