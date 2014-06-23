@@ -159,7 +159,7 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
 
 
 typedef struct _rraInfo {
-    char* cf;
+    char cf[80];
     unsigned long rows;
     unsigned long perRow;
     struct _rraInfo* next;
@@ -176,8 +176,23 @@ void freeRraInfo(rraInfo* rraInfoOut) {
     rraInfoOut = NULL;
 }
 
+void printRraInfo(rraInfo* rraInfoIn) {
+
+    rraInfo* rraInfoTmp = rraInfoIn;
+
+    while (rraInfoTmp) {
+
+	printf("rows %d\n", rraInfoTmp->rows);
+	printf("perRow %d\n", rraInfoTmp->perRow);
+	printf("cf %s\n", rraInfoTmp->cf);
+
+	rraInfoTmp = rraInfoTmp->next;
+
+    }
+}
+
 //TODO return rraCnt as a pass-by-ref
-unsigned long getRraInfo (rraInfo* rraInfoOut, rrd_info_t* rrdInfoIn, int *rraCntOut){
+rraInfo* getRraInfo (rrd_info_t* rrdInfoIn, int *rraCntOut, unsigned long *stepOut){
     unsigned long step = 0;
     int rraCnt = 0;
 
@@ -185,40 +200,54 @@ unsigned long getRraInfo (rraInfo* rraInfoOut, rrd_info_t* rrdInfoIn, int *rraCn
     char rowsKey[80];
     char perRowKey[80];
 
+    printf("sprinting\n");
     sprintf(cfKey, "rra[%d].cf", 0);
     sprintf(rowsKey, "rra[%d].rows", 0);
     sprintf(perRowKey, "rra[%d].pdp_per_row", 0);
 
 
-    rraInfoOut = malloc(sizeof(rraInfo)); 
+    rraInfo* rraInfoOut = malloc(sizeof(rraInfo)); 
 
     rraInfo *rraInfoTmp = rraInfoOut;
 
 
 
+    printf("entering loop\n");
     while(rrdInfoIn) {
+	printf("looping\n");
 
 	if (!strcmp(rrdInfoIn->key, "step")){
+	    printf("matching step\n");
 	    step = rrdInfoIn->value.u_cnt;
 	}
 
 
 	if (!strcmp(rrdInfoIn->key, cfKey)){
+	    printf("matching cfkey\n");
+
 	    if (rraCnt > 0) {
+		printf("rraCnt > 0\n");
+
 		rraInfoTmp->next = malloc(sizeof(rraInfo));
 		rraInfoTmp = rraInfoTmp->next;
+		rraInfoTmp->next = NULL;
 	    }
 
+	    printf("copying string\n");
+	    printf("copying string %s\n", rrdInfoIn->value.u_str);
 	    strcpy(rraInfoTmp->cf, rrdInfoIn->value.u_str);
+	    printf("copied string\n");
 
 	}
 
 	if (!strcmp(rrdInfoIn->key, rowsKey)){
+	    printf("matching rowsKey\n");
 	    rraInfoTmp->rows = rrdInfoIn->value.u_cnt;
 
 	}
 
 	if (!strcmp(rrdInfoIn->key, perRowKey)){
+	    printf("matching perRowKey\n");
 	    rraInfoTmp->perRow = rrdInfoIn->value.u_cnt;
 	    rraCnt ++;
 
@@ -240,12 +269,17 @@ unsigned long getRraInfo (rraInfo* rraInfoOut, rrd_info_t* rrdInfoIn, int *rraCn
 
     //TODO check if everything looks allright
     *rraCntOut = rraCnt;
-    return step;
+    *stepOut = step;
+
+    printf("rraInfoOut %p\n", rraInfoOut);
+    return rraInfoOut;
 }
 
 
 
 SEXP smartImportRRD(SEXP filenameIn){
+    printf("we are in\n");
+	
 //TODO get info
 //TODO get first and last
 //TODO get identifiers for each rra
@@ -272,21 +306,30 @@ SEXP smartImportRRD(SEXP filenameIn){
     const char *filename = CHAR(asChar(filenameIn));
     rrd_info_t *rrdInfo;
 
+    printf("calling rrd_last\n");
     last = rrd_last_r(filename);
+    printf("calling rrd_info\n");
     rrdInfo = rrd_info_r(filename);
 
 
 
-    step = getRraInfo(rraInfoList, rrdInfo, &rraCnt);
+    printf("calling getrrainfo\n");
+    rraInfoList = getRraInfo(rrdInfo, &rraCnt, &step);
+    printf("called getrrainfo\n");
 
     
+    printf("rraCnt %d step %d last %d rraInfoList %p\n", rraCnt, step, last, rraInfoList);
+    printRraInfo(rraInfoList);
+
     if (rraInfoList == NULL) {
+	printf("getting rra info failed\n");
 	//handle error
 
     }
 
 
     startAr = malloc(rraCnt * sizeof(time_t));
+
 
 
     //TODO do that for each in a loop
@@ -302,6 +345,7 @@ SEXP smartImportRRD(SEXP filenameIn){
 
     int i = 0;
 
+    printf("entering loop\n");
     while (rraInfoTmp) {
 
 	//TODO move declarations out of the loop
@@ -313,9 +357,9 @@ SEXP smartImportRRD(SEXP filenameIn){
 	rrd_value_t *data;
 
 
-	int status = rrd_fetch_r(filename, rraInfoTmp->cf, &start, &end, &step, &ds_cnt, &ds_namv, &data);
+	int status = rrd_fetch_r(filename, rraInfoTmp->cf, &start, &end, &curStep, &ds_cnt, &ds_namv, &data);
 
-	printf("size of data %d start %d end %d step %d ds_cnt %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, step, ds_cnt);
+	printf("size of data %d start %d end %d step %d ds_cnt %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, curStep, ds_cnt);
 	fflush(stdout);
 
 	int size = (end - start)/curStep;
@@ -329,7 +373,8 @@ SEXP smartImportRRD(SEXP filenameIn){
 	    vec = PROTECT(allocVector(REALSXP, size));
 	    for (int i = 0; i < size; i++){
 
-		REAL(vec)[i] = data[i + ds];
+		//REAL(vec)[i] = data[i + ds];
+		REAL(vec)[i] = data[ds + i*ds_cnt];
 	    }
 
 
@@ -342,6 +387,7 @@ SEXP smartImportRRD(SEXP filenameIn){
 
 	//TODO push RRA into RRD class/data structure
 	i++;
+	free(data);
     }
 
     //TODO unprotect how many times?
@@ -349,16 +395,7 @@ SEXP smartImportRRD(SEXP filenameIn){
 
 
     freeRraInfo(rraInfoList);
-    //TODO free startAr
-
-
-
-
-
-
-//TODO write data to SEXP object
-
-
+    free(startAr);
 
 
 

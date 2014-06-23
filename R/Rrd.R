@@ -9,3 +9,7 @@ importRRD <- function(filename = "char", cf = "char", start = "integer", end = "
 #importRRD <- function() {
     #.Call("importRRD", 'c', PACKAGE = "Rrd")
 #}
+
+importRRD <- function(filename = "char") {
+    .Call("smartImportRRD", filename, PACKAGE = "Rrd")
+}
