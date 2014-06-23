@@ -363,6 +363,7 @@ SEXP smartImportRRD(SEXP filenameIn){
 	fflush(stdout);
 
 	int size = (end - start)/curStep;
+	printf("size %d\n", size);
 
 	SEXP rraSexpList = PROTECT(allocVector(VECSXP, ds_cnt));
 
@@ -371,10 +372,10 @@ SEXP smartImportRRD(SEXP filenameIn){
 	//TODO stick to row/columns convention
 	for (int ds = 0; ds < ds_cnt; ds++){
 	    vec = PROTECT(allocVector(REALSXP, size));
-	    for (int i = 0; i < size; i++){
+	    for (int j = 0; j < size; j++){
 
 		//REAL(vec)[i] = data[i + ds];
-		REAL(vec)[i] = data[ds + i*ds_cnt];
+		REAL(vec)[j] = data[ds + j*ds_cnt];
 	    }
 
 
@@ -396,7 +397,7 @@ SEXP smartImportRRD(SEXP filenameIn){
 
     freeRraInfo(rraInfoList);
     free(startAr);
-
+    UNPROTECT(ds_cnt*rraCnt + 1);
 
 
 
