@@ -3,12 +3,11 @@
 \alias{Rrd}
 \docType{package}
 \title{
-What the package does (short line)
-~~ package title ~~
+Import data from a RRD file into R
 }
 \description{
-More about what it does (maybe more than one line)
-~~ A concise (1-5 lines) description of the package ~~
+The package uses librrd to import the numerical data in a rrd database directly into R data structures without using intermediate formats.
+
 }
 \details{
 \tabular{ll}{
@@ -18,25 +17,37 @@ Version: \tab 1.0\cr
 Date: \tab 2014-06-01\cr
 License: \tab What license is it under?\cr
 }
-~~ An overview of how to use the package, including the most important ~~
-~~ functions ~~
+
+Use importRRD(filename) and importRRD(filename, consolidation function, start, end, step)
+to import RRA arrays into vectors in R.
+
+importRRD(filename) tries to first read the metadata in the RRD and adjust the parameters accordingly in order to expose all arrays. 
+importRRD(filename)[[i]][[j]][[k]]
+
+i - index of RRA
+j - index of ds
+k - index of entry in time series
+
 }
 \author{
-Who wrote it
+Plamen Dimitrov
 
-Maintainer: Who to complain to <yourfault@somewhere.net>
-~~ The author and/or maintainer of the package ~~
+Maintainer: Plamen Dimitrov <dim.plamen@gmail.com>
 }
 \references{
-~~ Literature or other references for background information ~~
+http://oss.oetiker.ch/rrdtool/doc/index.en.html
 }
-~~ Optionally other standard keywords, one per line, from file KEYWORDS in ~~
-~~ the R documentation directory ~~
+
 \keyword{ package }
+\keyword{ rrd }
+\keyword{ rrdtool }
+
 \seealso{
-~~ Optional links to other man pages, e.g. ~~
-~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
 }
+
 \examples{
-~~ simple examples of the most important functions ~~
+
+importRRD("/var/lib/ganglia/rrds/__SummaryInfo__/boottime.rrd", "AVERAGE", 0, 0, 1)
+importRRD("/var/lib/ganglia/rrds/__SummaryInfo__/boottime.rrd")
+
 }
