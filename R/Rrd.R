@@ -3,13 +3,17 @@ importArray <- function() {
 }
 
 importRRD <- function(filename = "char", cf = "char", start = "integer", end = "integer", step = "long") {
-    .Call("importRRD", filename, cf, start, end, step, PACKAGE = "Rrd")
-}
 
-#importRRD <- function() {
-    #.Call("importRRD", 'c', PACKAGE = "Rrd")
-#}
 
-importRRD <- function(filename = "char") {
-    .Call("smartImportRRD", filename, PACKAGE = "Rrd")
+    if (missing(filename))
+	stop("Need to provide a path to an RRD file")
+
+
+    if (missing(cf) || missing(start) || missing(end) || missing(step)) {
+	.Call("smartImportRRD", filename, PACKAGE = "Rrd")
+    } else {
+
+	.Call("importRRD", filename, cf, start, end, step, PACKAGE = "Rrd")
+    }
+
 }
