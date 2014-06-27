@@ -27,7 +27,7 @@ Exposes all the values in an RRD - each RRA, each DS, from first to last timesta
     rrd = importRRD("filename.rrd")
     rrd[[i]][[j]][k]
 
-refers to the k<sup>th</sup> value (starting from the earliest timestamp for which the RRD stores data) from the j<sup>th</sup> data store in the i<sup>th</sup> rra.
+refers to the k<sup>th</sup> value (starting from the earliest timestamp for which the RRD stores data) from the j<sup>th</sup> data store in the i<sup>th</sup> RRA.
 
 
 ##importRRD(filename, consolidation function, start, end, step)
