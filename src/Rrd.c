@@ -54,7 +54,7 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
 
     if (access(filename, F_OK) == -1) {
 	printf("file does not exist\n");
-	return out;
+	exit(0);
     }
 
     cf = CHAR(asChar(cfIn));
@@ -78,7 +78,7 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
 		}
 		free(ds_namv);
 	    }
-	    exit(1);
+	    exit(0);
 	}
 
     printf("size of data %d start %d end %d step %d ds_cnt %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, step, ds_cnt);
@@ -293,7 +293,7 @@ SEXP smartImportRRD(SEXP filenameIn){
     filename  = CHAR(asChar(filenameIn));
     if (access(filename, F_OK) == -1) {
 	printf("file does not exist\n");
-	return out;
+	exit(0);
     }
 
 
@@ -306,7 +306,7 @@ SEXP smartImportRRD(SEXP filenameIn){
 
     if (rrdInfo == NULL) {
 	printf("getting rrd info failed");
-	return out;
+	exit(0);
     }
 
 
@@ -316,7 +316,7 @@ SEXP smartImportRRD(SEXP filenameIn){
     if (rraInfoList == NULL) {
 	printf("getting rra info failed\n");
 	free(rrdInfo);
-	return out;
+	exit(0);
 
     }
     
@@ -331,7 +331,7 @@ SEXP smartImportRRD(SEXP filenameIn){
 	printf("memory allocation error");
 	free(rrdInfo);
 	freeRraInfo(rraInfoList);
-	return out;
+	exit(0);
     }
 
 
@@ -371,7 +371,7 @@ SEXP smartImportRRD(SEXP filenameIn){
 		free(ds_namv);
 	    }
 	    //TODO unprotect how many times?
-	    return vec;
+	    exit(0);
 	}
 
 
