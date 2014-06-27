@@ -1,26 +1,16 @@
 #define RRD_EXPORT_DEPRECATED
 
 #include <rrd.h>
-//#include <rrd_format.h>
 #include <R.h>
 #include <Rdefines.h>
 #include <Rinternals.h>
 #include <stdio.h>
-/*#include "rrd_tool.h"*/
-/*#include "rrd_rpncalc.h"*/
-/*#include "rrd_client.h"*/
 
 
-#define DEBUG
-
-#define RRD_READONLY    (1<<0)
-#define RRD_READWRITE   (1<<1)
-#define RRD_CREAT       (1<<2)
-#define RRD_READAHEAD   (1<<3)
-#define RRD_COPY        (1<<4)
-#define RRD_EXCL        (1<<5)
+//#define DEBUG
 
 
+//demonstrates how c arrays are imported in R
 SEXP exposeArray(char c){
     int array[5] = {1,2,3,4,5};
     int size = sizeof (array) / sizeof (*array);
@@ -34,121 +24,86 @@ SEXP exposeArray(char c){
     return out;
 }
 
-/*SEXP importRRD(const char* filename){*/
-    /*rrd_t rrd;*/
-    /*unsigned int i, ii, ix, iii = 0;*/
-    /*rrd_file_t *rrd_file;*/
-    /*rrd_init(&rrd);*/
-    /*rrd_value_t my_cdp;*/
-    /*off_t     rra_base, rra_start, rra_next;*/
 
-    /*rrd_file = rrd_open(filename, &rrd, RRD_READONLY | RRD_READAHEAD);*/
-    /*if (rrd_file == NULL) {*/
-        /*rrd_free(&rrd);*/
-        /*return (-1);*/
-    /*}*/
-    /*rra_base = rrd_file->header_len;*/
-    /*rra_next = rra_base;*/
-
-    /*for (i = 0; i < rrd.stat_head->rra_cnt; i++) {*/
-
-        /*long      timer = 0;*/
-
-        /*rra_start = rra_next;*/
-        /*rra_next += (rrd.stat_head->ds_cnt*/
-                     /** rrd.rra_def[i].row_cnt * sizeof(rrd_value_t));*/
-
-
-
-        /*rrd_seek(rrd_file, (rra_start + (rrd.rra_ptr[i].cur_row + 1)*/
-                            /** rrd.stat_head->ds_cnt*/
-                            /** sizeof(rrd_value_t)), SEEK_SET);*/
-
-        /*ii = rrd.rra_ptr[i].cur_row;*/
-
-	/*//for each archive*/
-        /*for (ix = 0; ix < rrd.rra_def[i].row_cnt; ix++) {*/
-            /*ii++;*/
-            /*if (ii >= rrd.rra_def[i].row_cnt) {*/
-                /*rrd_seek(rrd_file, rra_start, SEEK_SET);*/
-                /*ii = 0; [> wrap if max row cnt is reached <]*/
-            /*}*/
-
-	    /*//for each data source */
-            /*for (iii = 0; iii < rrd.stat_head->ds_cnt; iii++) {*/
-                /*rrd_read(rrd_file, &my_cdp, sizeof(rrd_value_t) * 1);*/
-                /*if (isnan(my_cdp)) {*/
-		/*//TODO put symbol R_NaReal*/
-                /*} else {*/
-		/*//put number*/
-                /*}*/
-            /*}*/
-        /*}*/
-    /*}*/
-
-
-    /*rrd_free(&rrd);*/
-
-    /*rrd_close(rrd_file);*/
-
-/*}*/
-
-
-/*SEXP rrd_fetch(const char *filename, const char* cf,  time_t *start, time_t *end, unsigned long *step)  {*/
-/*SEXP importRRD(const char* filename, time_t start, time_t end, unsigned long step)  {*/
+/*A wrapper for rrd_fetch_r*/
+/*Finds the RRA of interest that best matches cfIn, and stepIn in filenameIn*/
+/*then returns a list or R vectors (one for each ds) that contain the RRA values fitting between timestamps startIn and sendIn*/
 SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn)  {
 
     rrd_value_t *data;
-    //this should complain if data needs to be initialized
-    //hmm... think we need to initialize
-    
 
-
-    /*const char filename[] = "/var/lib/ganglia/rrds/__SummaryInfo__/boottime.rrd";*/
-    const char *filename = CHAR(asChar(filenameIn));
-
-
-
-    /*const char cf[] = "AVERAGE";*/
-    const char *cf = CHAR(asChar(cfIn));
-
-    /*time_t start = 0;*/
-    time_t start = (time_t) asInteger(startIn);
-
-    /*time_t end = 0;*/
-    time_t end = (time_t) asInteger(endIn);
-
-
-    /*unsigned long step = 1;*/
-    unsigned long step = (unsigned long) asInteger(stepIn);
-
-    unsigned long ds_cnt;
+    const char *filename;
+    const char *cf;
     char** ds_namv;
 
-    printf("we are about to call rrdfetch\n");
-    fflush(stdout);
-    int status = rrd_fetch_r(filename, cf, &start, &end, &step, &ds_cnt, &ds_namv, &data);
-    printf("we just did\n");
-    printf("size of data %d start %d end %d step %d ds_cnt %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, step, ds_cnt);
-    fflush(stdout);
-    int size = (end - start)/step;
+    time_t start;
+    time_t end;
 
-    SEXP out = PROTECT(allocVector(VECSXP, ds_cnt));
+    unsigned long step;
+    unsigned long ds_cnt;
+
+    int status;
+    int size;
+    int ds;
+    int i;
+
+    SEXP out;
     SEXP vec;
-    for (int ds = 0; ds < ds_cnt; ds++){
+
+    filename  = CHAR(asChar(filenameIn));
+
+    if (access(filename, F_OK) == -1) {
+	printf("file does not exist\n");
+	return out;
+    }
+
+    cf = CHAR(asChar(cfIn));
+    start = (time_t) asInteger(startIn);
+    end = (time_t) asInteger(endIn);
+
+    step  = (unsigned long) asInteger(stepIn);
+
+
+
+    printf("calling rrdfetch\n");
+
+    status = rrd_fetch_r(filename, cf, &start, &end, &step, &ds_cnt, &ds_namv, &data);
+	if (status != 0 || data == NULL) {
+	    printf("error running rrd_fetch_r\n");
+	    if (data)
+		free(data);
+	    if (ds_namv) {
+		for (int k = 0; k < sizeof(ds_namv)/sizeof(char*); k++) {
+		    free(ds_namv[k]);
+		}
+		free(ds_namv);
+	    }
+	    exit(1);
+	}
+
+    printf("size of data %d start %d end %d step %d ds_cnt %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, step, ds_cnt);
+
+    size = (end - start)/step;
+
+    out = PROTECT(allocVector(VECSXP, ds_cnt));
+
+    for (ds = 0; ds < ds_cnt; ds++){
+
 	vec = PROTECT(allocVector(REALSXP, size));
-	for (int i = 0; i < size; i++){
+	for (i = 0; i < size; i++){
 	    /*printf("iterating.. i = %d\n", i);*/
-	    /*REAL(out)[i] = *(data)[0][0];*/
-	    /*REAL(out)[i] = data[i];*/
-	    /*REAL(vec)[i] = (&data)[ds][i];*/
-	    REAL(vec)[i] = data[i + ds];
+	    REAL(vec)[i] = data[ds + i*ds_cnt];
 	}
 	SET_VECTOR_ELT(out, ds, vec);
-	/*newdata += ds_cnt;*/
     }
 
     UNPROTECT(ds_cnt + 1);
+
+    free(data);
+    for (int k = 0; k < sizeof(ds_namv)/sizeof(char*); k++) {
+	free(ds_namv[k]);
+    }
+    free(ds_namv);
 
     return out;
 
@@ -156,8 +111,7 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
 }
 
 
-
-
+//linked list we use to store the rra info
 typedef struct _rraInfo {
     char cf[80];
     unsigned long rows;
@@ -191,7 +145,9 @@ void printRraInfo(rraInfo* rraInfoIn) {
     }
 }
 
-//TODO return rraCnt as a pass-by-ref
+/*reads a rrd_info_t returned by rrdinfo and */
+/*returns the information we need in a rraInfo linked list*/
+/*returns the rra count and the global step by reference*/
 rraInfo* getRraInfo (rrd_info_t* rrdInfoIn, int *rraCntOut, unsigned long *stepOut){
     unsigned long step = 0;
     int rraCnt = 0;
@@ -206,15 +162,23 @@ rraInfo* getRraInfo (rrd_info_t* rrdInfoIn, int *rraCntOut, unsigned long *stepO
     sprintf(perRowKey, "rra[%d].pdp_per_row", 0);
 
 
-    rraInfo* rraInfoOut = malloc(sizeof(rraInfo)); 
+    rraInfo* rraInfoOut;
+    rraInfo* rraInfoTmp;
 
-    rraInfo *rraInfoTmp = rraInfoOut;
+    rraInfoOut = malloc(sizeof(rraInfo)); 
+    if (rraInfoOut == NULL) {
+	printf("error allocating memory\n");
+	return NULL;
+    }
+
+    rraInfoTmp = rraInfoOut;
 
 
 
+    //note this assumes the entries in rrdInfoIn are in a certain order!
+    //looking at the code of rrdinfo I think we can safely assume this
     printf("entering loop\n");
     while(rrdInfoIn) {
-	printf("looping\n");
 
 	if (!strcmp(rrdInfoIn->key, "step")){
 	    printf("matching step\n");
@@ -229,14 +193,19 @@ rraInfo* getRraInfo (rrd_info_t* rrdInfoIn, int *rraCntOut, unsigned long *stepO
 		printf("rraCnt > 0\n");
 
 		rraInfoTmp->next = malloc(sizeof(rraInfo));
+		if (rraInfoTmp->next == NULL) {
+		    printf("error allocating memory\n");
+		    freeRraInfo(rraInfoOut);
+		    return NULL;
+		}
+
+
 		rraInfoTmp = rraInfoTmp->next;
 		rraInfoTmp->next = NULL;
 	    }
 
-	    printf("copying string\n");
 	    printf("copying string %s\n", rrdInfoIn->value.u_str);
 	    strcpy(rraInfoTmp->cf, rrdInfoIn->value.u_str);
-	    printf("copied string\n");
 
 	}
 
@@ -249,7 +218,7 @@ rraInfo* getRraInfo (rrd_info_t* rrdInfoIn, int *rraCntOut, unsigned long *stepO
 	if (!strcmp(rrdInfoIn->key, perRowKey)){
 	    printf("matching perRowKey\n");
 	    rraInfoTmp->perRow = rrdInfoIn->value.u_cnt;
-	    rraCnt ++;
+	    rraCnt++;
 
 	    sprintf(cfKey, "rra[%d].cf", rraCnt);
 	    sprintf(rowsKey, "rra[%d].rows", rraCnt);
@@ -276,105 +245,150 @@ rraInfo* getRraInfo (rrd_info_t* rrdInfoIn, int *rraCntOut, unsigned long *stepO
 }
 
 
+/*A wrapper for rrd_fetch_r that first gets some information for the RRD*/
+/*and uses that information to expose all values in the file*/
+
+/*Returns a list (one for each RRA) of lists (one for each DS) of values */
+/*gets the cosolidation functions and computes the step for each RRA*/
+/*gets the first and last timestamp for each RRA*/
+/*calls rrd_fetch_r and copies all values to SEXP vectors*/
 
 SEXP smartImportRRD(SEXP filenameIn){
-    printf("we are in\n");
-	
-//TODO get info
-//TODO get first and last
-//TODO get identifiers for each rra
-//TODO get info for each DS
-//TODO get resolution and size for each rra
-//TODO get  consolidation function for each rra
-//TODO print all stuff and create a list of (cf, res)->ds
-//TODO stick to row/column convention
-
 
     time_t first;
     time_t last;
     time_t start;
     time_t end;
-    unsigned long curStep;
-    unsigned long ds_cnt;
 
-    unsigned long step;
-    int rraCnt;
     time_t *startAr;
 
-    rraInfo* rraInfoList;
 
-    const char *filename = CHAR(asChar(filenameIn));
+    unsigned long curStep;
+    unsigned long ds_cnt;
+    unsigned long step;
+
+    int rraCnt;
+    int status;
+    int size;
+    int i;
+    int ds;
+    int j;
+
+    char **ds_namv;
+    const char *filename;
+
+    rrd_value_t *data;
+
+    rraInfo* rraInfoList;
+    rraInfo* rraInfoTmp;
+
     rrd_info_t *rrdInfo;
+
+
+    SEXP out;
+    SEXP vec;
+    SEXP rraSexpList; 
+
+
+    filename  = CHAR(asChar(filenameIn));
+    if (access(filename, F_OK) == -1) {
+	printf("file does not exist\n");
+	return out;
+    }
+
 
     printf("calling rrd_last\n");
     last = rrd_last_r(filename);
+
+
     printf("calling rrd_info\n");
     rrdInfo = rrd_info_r(filename);
 
+    if (rrdInfo == NULL) {
+	printf("getting rrd info failed");
+	return out;
+    }
 
 
     printf("calling getrrainfo\n");
     rraInfoList = getRraInfo(rrdInfo, &rraCnt, &step);
-    printf("called getrrainfo\n");
 
+    if (rraInfoList == NULL) {
+	printf("getting rra info failed\n");
+	free(rrdInfo);
+	return out;
+
+    }
     
     printf("rraCnt %d step %d last %d rraInfoList %p\n", rraCnt, step, last, rraInfoList);
     printRraInfo(rraInfoList);
 
-    if (rraInfoList == NULL) {
-	printf("getting rra info failed\n");
-	//handle error
-
-    }
 
 
     startAr = malloc(rraCnt * sizeof(time_t));
 
+    if (startAr == NULL) {
+	printf("memory allocation error");
+	free(rrdInfo);
+	freeRraInfo(rraInfoList);
+	return out;
+    }
 
 
-    //TODO do that for each in a loop
-    
-    for (int i = 0; i < rraCnt; i++) {
+
+    for (i = 0; i < rraCnt; i++) {
 	startAr[i] = rrd_first_r(filename, i);
     }
     
 
-    rraInfo* rraInfoTmp = rraInfoList;
+    rraInfoTmp = rraInfoList;
 
-    SEXP out = PROTECT(allocVector(VECSXP, rraCnt));
+    out = PROTECT(allocVector(VECSXP, rraCnt));
 
-    int i = 0;
+    i = 0;
 
     printf("entering loop\n");
     while (rraInfoTmp) {
 
-	//TODO move declarations out of the loop
 	start = startAr[i];
 	end = last;
 	curStep = step * rraInfoTmp->perRow;
-	char **ds_namv;
-	//TODO how/when do we deallocate the data? is the data copied by value in R?
-	rrd_value_t *data;
 
 
-	int status = rrd_fetch_r(filename, rraInfoTmp->cf, &start, &end, &curStep, &ds_cnt, &ds_namv, &data);
+	status = rrd_fetch_r(filename, rraInfoTmp->cf, &start, &end, &curStep, &ds_cnt, &ds_namv, &data);
+
+	if (status != 0 || data == NULL) {
+	    printf("error running rrd_fetch_r\n");
+	    free(rrdInfo);
+	    freeRraInfo(rraInfoList);
+	    free(startAr);
+	    if (data)
+		free(data);
+	    if (ds_namv) {
+		for (int k = 0; k < sizeof(ds_namv)/sizeof(char*); k++) {
+		    free(ds_namv[k]);
+		}
+		free(ds_namv);
+	    }
+	    //TODO unprotect how many times?
+	    return vec;
+	}
+
 
 	printf("size of data %d start %d end %d step %d ds_cnt %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, curStep, ds_cnt);
 	fflush(stdout);
 
-	int size = (end - start)/curStep;
+	size = (end - start)/curStep;
 	printf("size %d\n", size);
 
-	SEXP rraSexpList = PROTECT(allocVector(VECSXP, ds_cnt));
+	rraSexpList = PROTECT(allocVector(VECSXP, ds_cnt));
 
 
-	SEXP vec;
 	//TODO stick to row/columns convention
-	for (int ds = 0; ds < ds_cnt; ds++){
+	for (ds = 0; ds < ds_cnt; ds++){
 	    vec = PROTECT(allocVector(REALSXP, size));
-	    for (int j = 0; j < size; j++){
 
-		//REAL(vec)[i] = data[i + ds];
+	    for (j = 0; j < size; j++){
 		REAL(vec)[j] = data[ds + j*ds_cnt];
 	    }
 
@@ -386,30 +400,23 @@ SEXP smartImportRRD(SEXP filenameIn){
 
 	rraInfoTmp = rraInfoTmp->next;
 
-	//TODO push RRA into RRD class/data structure
 	i++;
 	free(data);
     }
-
-    //TODO unprotect how many times?
 
 
 
     freeRraInfo(rraInfoList);
     free(startAr);
+    free(rrdInfo);
+    for (int k = 0; k < sizeof(ds_namv)/sizeof(char*); k++) {
+	free(ds_namv[k]);
+    }
+    free(ds_namv);
+
     UNPROTECT(ds_cnt*rraCnt + 1);
-
-
 
 
     return out;
 
 }
-
-
-
-
-
-
-
-
