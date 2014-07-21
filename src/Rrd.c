@@ -303,6 +303,7 @@ SEXP smartImportRRD(SEXP filenameIn){
     int i;
     int ds;
     int j;
+    int timeStamp;
 
     char **ds_namv;
     const char *filename;
@@ -319,6 +320,9 @@ SEXP smartImportRRD(SEXP filenameIn){
     SEXP vec;
     SEXP rraSexpList; 
     SEXP rraNames;
+    SEXP nam;
+    SEXP rowNam;
+    SEXP cls;
 
 
     filename  = CHAR(asChar(filenameIn));
@@ -375,6 +379,9 @@ SEXP smartImportRRD(SEXP filenameIn){
     rraInfoTmp = rraInfoList;
     PROTECT(rraNames = allocVector(STRSXP, rraCnt));
 
+    PROTECT(cls = allocVector(STRSXP, 1)); // class attribute
+    SET_STRING_ELT(cls, 0, mkChar("data.frame"));
+
 
     out = PROTECT(allocVector(VECSXP, rraCnt));
 
@@ -414,11 +421,32 @@ SEXP smartImportRRD(SEXP filenameIn){
 	size = (end - start)/curStep;
 	printf("size %d\n", size);
 
-	rraSexpList = PROTECT(allocVector(VECSXP, ds_cnt));
+	rraSexpList = PROTECT(allocVector(VECSXP, ds_cnt + 1));
+
+	vec = PROTECT(allocVector(INTSXP, size));
+	PROTECT(rowNam = allocVector(STRSXP, size));
+	timeStamp = start;
+
+
+
+
+	for (int j = 0; j < size; j++) {
+	    INTEGER(vec)[j] = timeStamp;
+	    timeStamp += step;
+
+	}
+
+	printf("setting row names\n");
+	SET_VECTOR_ELT(rraSexpList, 0, vec);
+	setAttrib(rraSexpList, R_RowNamesSymbol, vec);
+
+	PROTECT(nam = allocVector(STRSXP, ds_cnt + 1));
+	SET_STRING_ELT(nam, 0, mkChar("timestamp"));
 
 
 	//TODO stick to row/columns convention
 	for (ds = 0; ds < ds_cnt; ds++){
+	    SET_STRING_ELT(nam, ds + 1, mkChar(ds_namv[ds]));
 	    vec = PROTECT(allocVector(REALSXP, size));
 
 	    for (j = 0; j < size; j++){
@@ -426,9 +454,17 @@ SEXP smartImportRRD(SEXP filenameIn){
 	    }
 
 
-	  SET_VECTOR_ELT(rraSexpList, ds, vec);
+
+	    printf("adding ds vector to data frame\n");
+	    SET_VECTOR_ELT(rraSexpList, ds + 1, vec);
 	}
 
+	classgets(rraSexpList, cls);
+	namesgets(rraSexpList, nam);
+
+
+
+	printf("adding data frame to out\n");
 	SET_VECTOR_ELT(out, i, rraSexpList);
 
 	char rraNameString[80];
@@ -457,7 +493,7 @@ SEXP smartImportRRD(SEXP filenameIn){
     }
     free(ds_namv);
 
-    UNPROTECT(ds_cnt*rraCnt + 2);
+    UNPROTECT((ds_cnt + 2)*rraCnt + 3);
 
 
     return out;
