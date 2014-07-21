@@ -318,6 +318,7 @@ SEXP smartImportRRD(SEXP filenameIn){
     SEXP out;
     SEXP vec;
     SEXP rraSexpList; 
+    SEXP rraNames;
 
 
     filename  = CHAR(asChar(filenameIn));
@@ -372,6 +373,8 @@ SEXP smartImportRRD(SEXP filenameIn){
     
 
     rraInfoTmp = rraInfoList;
+    PROTECT(rraNames = allocVector(STRSXP, rraCnt));
+
 
     out = PROTECT(allocVector(VECSXP, rraCnt));
 
@@ -428,12 +431,22 @@ SEXP smartImportRRD(SEXP filenameIn){
 
 	SET_VECTOR_ELT(out, i, rraSexpList);
 
+	char rraNameString[80];
+	char stepString[40];
+
+	sprintf(stepString, "%d", curStep);
+	strcpy(rraNameString, rraInfoTmp->cf);
+	strcat(rraNameString, stepString);
+	SET_STRING_ELT(rraNames, i, mkChar(rraNameString));
+
+
 	rraInfoTmp = rraInfoTmp->next;
 
 	i++;
 	free(data);
     }
 
+    setAttrib(out, R_NamesSymbol, rraNames);
 
 
     freeRraInfo(rraInfoList);
@@ -444,7 +457,7 @@ SEXP smartImportRRD(SEXP filenameIn){
     }
     free(ds_namv);
 
-    UNPROTECT(ds_cnt*rraCnt + 1);
+    UNPROTECT(ds_cnt*rraCnt + 2);
 
 
     return out;
