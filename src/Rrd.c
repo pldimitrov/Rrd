@@ -46,9 +46,13 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
     int size;
     int ds;
     int i;
+    int timeStamp;
 
     SEXP out;
     SEXP vec;
+    SEXP nam;
+    SEXP rowNam;
+    SEXP cls;
 
     filename  = CHAR(asChar(filenameIn));
 
@@ -85,25 +89,51 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
 
     size = (end - start)/step;
 
-    out = PROTECT(allocVector(VECSXP, ds_cnt));
+    out = PROTECT(allocVector(VECSXP, ds_cnt + 1) );
+
+    vec = PROTECT(allocVector(INTSXP, size));
+    PROTECT(rowNam = allocVector(STRSXP, size));
+    timeStamp = start;
+
+    for (i = 0; i < size; i++) {
+	INTEGER(vec)[i] = timeStamp;
+
+	timeStamp += step;
+
+    }
+    SET_VECTOR_ELT(out, 0, vec);
+    setAttrib(out, R_RowNamesSymbol, vec);
+
+    PROTECT(nam = allocVector(STRSXP, ds_cnt + 1));
+    SET_STRING_ELT(nam, 0, mkChar("timestamp"));
+
 
     for (ds = 0; ds < ds_cnt; ds++){
+	SET_STRING_ELT(nam, ds + 1, mkChar(ds_namv[ds]));
 
 	vec = PROTECT(allocVector(REALSXP, size));
 	for (i = 0; i < size; i++){
 	    /*printf("iterating.. i = %d\n", i);*/
 	    REAL(vec)[i] = data[ds + i*ds_cnt];
 	}
-	SET_VECTOR_ELT(out, ds, vec);
+	SET_VECTOR_ELT(out, ds + 1, vec);
     }
 
-    UNPROTECT(ds_cnt + 1);
+    PROTECT(cls = allocVector(STRSXP, 1)); // class attribute
+    SET_STRING_ELT(cls, 0, mkChar("data.frame"));
+    classgets(out, cls);
+    namesgets(out, nam);
+
+
+
 
     free(data);
     for (int k = 0; k < sizeof(ds_namv)/sizeof(char*); k++) {
 	free(ds_namv[k]);
     }
     free(ds_namv);
+
+    UNPROTECT(ds_cnt + 4);
 
     return out;
 
