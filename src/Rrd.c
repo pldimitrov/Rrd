@@ -432,7 +432,7 @@ SEXP smartImportRRD(SEXP filenameIn){
 
 	for (int j = 0; j < size; j++) {
 	    INTEGER(vec)[j] = timeStamp;
-	    timeStamp += step;
+	    timeStamp += curStep;
 
 	}
 
