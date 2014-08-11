@@ -1,7 +1,7 @@
 Rrd
 ===
 
-R package for working with .rrd files
+R package for working with .rrd files. Uses [librrd](http://oss.oetiker.ch/rrdtool/doc/librrd.en.html) to import the binary data directly into R without exporting it to an intermediate format first.
 
 
 #Installation
@@ -61,7 +61,7 @@ Returns a list of data.frames (as above) with labels constructed as "consolidati
 
 ##getVal(filename, consolidation function, step, timestamp)
 
-Returns a set of values (one for each data store) associated with a single timestamp. Reads small "chunks" of the RRA (see __rrd.cacheBlock__ parameter in source code) and uses a package-wide read-ahead cache implemented as an [environment](http://stat.ethz.ch/R-manual/R-devel/library/base/html/environment.html) object.
+Returns a set of values (one for each data store) associated with a single timestamp. Reads small "chunks" of the RRA (see the __rrd.cacheBlock__ constant in source code) and uses a package-wide read-ahead cache implemented as an [environment](http://stat.ethz.ch/R-manual/R-devel/library/base/html/environment.html) object.
 
     getVal("filename", "AVERAGE", 15, 1402231740)
 
