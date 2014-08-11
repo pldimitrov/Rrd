@@ -61,7 +61,7 @@ Returns a list of data.frames (as above) with labels constructed as "consolidati
 
 ##getVal(filename, consolidation function, step, timestamp)
 
-Returns a set of values (one for each data store) associated with a single timestamp. Reads small "chunks" of the RRA (see the __rrd.cacheBlock__ constant in source code) and uses a package-wide read-ahead cache implemented as an [environment](http://stat.ethz.ch/R-manual/R-devel/library/base/html/environment.html) object.
+Returns a data.frame row associated with a certain __timestamp__. Reads small "chunks" of the RRA (see the __rrd.cacheBlock__ constant in source code) and uses a package-wide read-ahead cache implemented as an [environment](http://stat.ethz.ch/R-manual/R-devel/library/base/html/environment.html) object. The __timestamp__ and __step__ arguments are also used to calculate the row index in the cache to ensure fast indexing (as opposed to looking up by row name, which is known to be much slower in R).
 
     getVal("filename", "AVERAGE", 15, 1402231740)
 
