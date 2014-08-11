@@ -1,4 +1,3 @@
-
 #include <rrd.h>
 #include <R.h>
 #include <Rdefines.h>
@@ -135,7 +134,7 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
     }
     free(ds_namv);
 
-    UNPROTECT(ds_cnt + 4);
+    UNPROTECT(ds_cnt + 5);
 
     return out;
 
@@ -497,7 +496,7 @@ SEXP smartImportRRD(SEXP filenameIn){
     }
     free(ds_namv);
 
-    UNPROTECT((ds_cnt + 2)*rraCnt + 3);
+    UNPROTECT((ds_cnt + 4)*rraCnt + 3);
 
 
     return out;
