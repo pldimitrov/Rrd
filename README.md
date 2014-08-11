@@ -5,7 +5,7 @@ R package for working with .rrd files. Uses [librrd](http://oss.oetiker.ch/rrdto
 
 
 #Installation
-In order to build the package from source you need librrd.  
+In order to build the package from source you need [librrd](http://oss.oetiker.ch/rrdtool/doc/librrd.en.html).  
 Installing rrdtool from your package manager will usually also install the library.  
 
 In the parent directory of Rrd:  
