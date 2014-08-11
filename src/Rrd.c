@@ -1,4 +1,3 @@
-#define RRD_EXPORT_DEPRECATED
 
 #include <rrd.h>
 #include <R.h>
