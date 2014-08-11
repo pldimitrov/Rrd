@@ -31,7 +31,7 @@ getVal <- function(filename, cf, step, timestamp) {
 
 
 		if (timestamp > lastTimestamp) {
-			tmpDF = importRRD(filename, cf, lastTimestamp + step, timestamp + rrd.cacheBlock*step, step)
+			tmpDF = importRRD(filename, cf, lastTimestamp, timestamp + rrd.cacheBlock*step, step)
 			rrd.cache[[key]] <- rbind(rrd.cache[[key]], tmpDF)
 		}
 

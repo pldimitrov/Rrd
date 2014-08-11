@@ -27,7 +27,7 @@ SEXP exposeArray(char c){
 
 /*A wrapper for rrd_fetch_r*/
 /*Finds the RRA of interest that best matches cfIn, and stepIn in filenameIn*/
-/*then returns a list or R vectors (one for each ds) that contain the RRA values fitting between timestamps startIn and sendIn*/
+/*then returns an R data.frame that contain the RRA values fitting between timestamps startIn (non incl) and sendIn*/
 SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn)  {
 
     rrd_value_t *data;
@@ -87,13 +87,16 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
 
     printf("size of data %d start %d end %d step %d ds_cnt %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, step, ds_cnt);
 
-    size = (end - start)/step;
+    //turns out rrd_fetch does not include start in data
+    size = (end - start)/step - 1;
 
     out = PROTECT(allocVector(VECSXP, ds_cnt + 1) );
 
     vec = PROTECT(allocVector(INTSXP, size));
     PROTECT(rowNam = allocVector(STRSXP, size));
-    timeStamp = start;
+    
+    //turns out rrd_fetch does not include start in data
+    timeStamp = start + step;
 
     for (i = 0; i < size; i++) {
 	INTEGER(vec)[i] = timeStamp;
@@ -278,7 +281,7 @@ rraInfo* getRraInfo (rrd_info_t* rrdInfoIn, int *rraCntOut, unsigned long *stepO
 /*A wrapper for rrd_fetch_r that first gets some information for the RRD*/
 /*and uses that information to expose all values in the file*/
 
-/*Returns a list (one for each RRA) of lists (one for each DS) of values */
+/*Returns a list (one for each RRA) of R data.frames  */
 /*gets the cosolidation functions and computes the step for each RRA*/
 /*gets the first and last timestamp for each RRA*/
 /*calls rrd_fetch_r and copies all values to SEXP vectors*/
@@ -418,14 +421,16 @@ SEXP smartImportRRD(SEXP filenameIn){
 	printf("size of data %d start %d end %d step %d ds_cnt %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, curStep, ds_cnt);
 	fflush(stdout);
 
-	size = (end - start)/curStep;
+	//rrd_fetch does not include start
+	size = (end - start)/curStep - 1;
 	printf("size %d\n", size);
 
 	rraSexpList = PROTECT(allocVector(VECSXP, ds_cnt + 1));
 
 	vec = PROTECT(allocVector(INTSXP, size));
 	PROTECT(rowNam = allocVector(STRSXP, size));
-	timeStamp = start;
+	//rrd_fetch does not include start
+	timeStamp = start + curStep;
 
 
 

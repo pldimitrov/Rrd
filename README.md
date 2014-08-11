@@ -21,7 +21,7 @@ In R:
     library(Rrd)
 
 ##importRRD(filename, consolidation function, start, end, step)
-Finds the RRA that best matches the __consolidation function__ and the __step__ and imports all values (from all data stores) in that RRA that are between timestamp __start__ and __end__.
+Finds the RRA that best matches the __consolidation function__ and the __step__ and imports all values (from all data stores) in that RRA that are between timestamp __start__ and __end__. __start__ is not included in the result.
 
     rra = importRRD("filename.rrd", "AVERAGE", 1402144275, 1402144410, 15)
 

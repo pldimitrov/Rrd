@@ -26,7 +26,7 @@ License: \tab What license is it under?\cr
 
 Use importRRD(filename) and importRRD(filename, consolidation function, start, end, step)
 to import (a part of) an RRA into a data.frame. The filename, consolidation function and step parameters uniquely identify an RRA array 
-in the RRD file. start and end define the time-slice to be retrieved. Look at the documentation for rrd_fetch for more info.
+in the RRD file. Start and end define the time-slice to be retrieved. Start is not included in the result. Look at the documentation for rrd_fetch for more info.
 
 The returned data.frame has the timestamp and the data stores as separate columns. The names of the data sources are
 extracted from the RRD file and set as column names. The timestamps are also used as row names.
