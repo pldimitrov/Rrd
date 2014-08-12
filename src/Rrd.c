@@ -502,3 +502,73 @@ SEXP smartImportRRD(SEXP filenameIn){
     return out;
 
 }
+
+/* gets the first timestamp for the RRA identified by cfIn and stepIn in filenameIn */
+SEXP getFirst(SEXP filenameIn, SEXP cfIn, SEXP stepIn)  {
+    const char *filename;
+    const char *cf;
+
+    unsigned long step;
+    unsigned long curStep;
+
+    rrd_info_t *rrdInfo;
+
+    rraInfo* rraInfoList;
+    rraInfo* rraInfoTmp;
+    
+    int i;
+    int rraCnt;
+
+    SEXP out;
+
+    filename  = CHAR(asChar(filenameIn));
+
+    if (access(filename, F_OK) == -1) {
+	exit(0);
+    }
+
+    cf = CHAR(asChar(cfIn));
+
+    curStep  = (unsigned long) asInteger(stepIn);
+    rrdInfo = rrd_info_r(filename);
+
+    if (rrdInfo == NULL) {
+	exit(0);
+    }
+
+
+    rraInfoList = getRraInfo(rrdInfo, &rraCnt, &step);
+
+    if (rraInfoList == NULL) {
+	free(rrdInfo);
+	exit(0);
+
+    }
+
+    rraInfoTmp = rraInfoList;
+
+    i = 0;
+    while (rraInfoTmp) {
+	if (!strcmp(cf, rraInfoTmp->cf) && (curStep == step*rraInfoTmp->perRow)) {
+	    break;
+	}
+	i++;
+	rraInfoTmp = rraInfoTmp->next;
+    }
+
+    out = PROTECT(allocVector(INTSXP, 1));
+    if (i < rraCnt) {
+	printf("matching first is %d\n", rrd_first_r(filename, i));
+	INTEGER(out)[0] = rrd_first_r(filename, i);
+    } else {
+	out = R_NilValue;
+    }
+
+    freeRraInfo(rraInfoList);
+    free(rrdInfo);
+    UNPROTECT(1);
+
+
+    return out;
+
+}

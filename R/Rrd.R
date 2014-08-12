@@ -1,5 +1,7 @@
 rrd.cache = new.env(hash = TRUE)
+rrd.first = new.env(hash = TRUE)
 rrd.cacheBlock = 50
+rrd.cacheSize = 1000
 
 
 getVal <- function(filename, cf, step, timestamp) {
@@ -9,7 +11,16 @@ getVal <- function(filename, cf, step, timestamp) {
 		if (!file.exists(filename) || !is.character(cf) || !is.numeric(step) || !is.numeric(timestamp)) {
 			stop("usage: getVal(filename, cf, step, timestamp)")
 		}
-		rrd.cache[[key]] <- importRRD(filename, cf, timestamp - rrd.cacheBlock*step, timestamp + rrd.cacheBlock*step, step)
+
+		rrd.first[[key]] <- .Call("getFirst", filename, cf, step)
+		if(is.null(rrd.first[[key]])) {
+			stop("rra not matched")
+		   
+		}
+	
+
+		rrd.cache[[key]] <- importRRD(filename, cf, max(rrd.first[[key]], timestamp - rrd.cacheBlock*step), timestamp + rrd.cacheBlock*step, step)
+
 		if (((timestamp - rrd.cache[[key]][1, 1]) %% step) != 0) {
 			stop("step is wrong")
 		}
@@ -23,17 +34,23 @@ getVal <- function(filename, cf, step, timestamp) {
 			stop("step is wrong")
 		}
 
-		if (timestamp < rrd.cache[[key]][1, 1]) {
-			tmpDF = importRRD(filename, cf, timestamp - rrd.cacheBlock*step, rrd.cache[[key]][1, 1] - step, step)
-			rrd.cache[[key]]  <- rbind(tmpDF, rrd.cache[[key]])
+		if ( ((lastTimestamp - timestamp)/step > rrd.cacheSize) ||  ((timestamp - rrd.cache[[key]][1, 1])/step > rrd.cacheSize) ) {
+			rrd.cache[[key]] <- importRRD(filename, cf, max(rrd.first[[key]],  timestamp - rrd.cacheBlock*step), timestamp + rrd.cacheBlock*step, step)
+		}
+		else {
+			if (timestamp < rrd.cache[[key]][1, 1]) {
+				tmpDF = importRRD(filename, cf, max(rrd.first[[key]],  timestamp - rrd.cacheBlock*step), rrd.cache[[key]][1, 1] - step, step)
+				rrd.cache[[key]]  <- rbind(tmpDF, rrd.cache[[key]])
 
+			}
+
+			if (timestamp > lastTimestamp) {
+				tmpDF = importRRD(filename, cf, lastTimestamp, timestamp + rrd.cacheBlock*step, step)
+				rrd.cache[[key]] <- rbind(rrd.cache[[key]], tmpDF)
+			}
 		}
 
 
-		if (timestamp > lastTimestamp) {
-			tmpDF = importRRD(filename, cf, lastTimestamp, timestamp + rrd.cacheBlock*step, step)
-			rrd.cache[[key]] <- rbind(rrd.cache[[key]], tmpDF)
-		}
 
 	}
 

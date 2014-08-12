@@ -31,11 +31,12 @@ in the RRD file. Start and end define the time-slice to be retrieved. Start is n
 The returned data.frame has the timestamp and the data stores as separate columns. The names of the data sources are
 extracted from the RRD file and set as column names. The timestamps are also used as row names.
 
-Use getVal(filename, cf, step, timestamp) to get values for a single timestamp. Uses a package-wide read-ahead cache and calculates index in the
-cache from the timestamp for faster indexing. Returns a single data.frame row.
-
-importRRD(filename) first reads the metadata in the RRD and adjusts the parameters accordingly in order to expose all arrays. Returns a list of data.frames (as above) 
+importRRD(filename) first reads the metadata in the RRD and adjusts the parameters accordingly in order to expose all RRAs in their entirety. Returns a list of data.frames (as above) 
 with labels constructed as "consolidation function" + "step" - e.g. "AVERAGE15".
+
+Use getVal(filename, cf, step, timestamp) to get values for a single timestamp. Uses a package-wide read-ahead cache and calculates index in the
+cache from the timestamp for faster indexing. Returns a single data.frame row. Ensures no more than rrd.cacheSize rows per RRA are kept in the cache.
+
 
 
 }
@@ -46,6 +47,7 @@ Maintainer: Plamen Dimitrov <dim.plamen@gmail.com>
 }
 \references{
 http://oss.oetiker.ch/rrdtool/doc/index.en.html
+https://github.com/pldimitrov/Rrd
 }
 
 \keyword{ package }

@@ -61,7 +61,7 @@ Returns a list of data.frames (as above) with labels constructed as "consolidati
 
 ##getVal(filename, consolidation function, step, timestamp)
 
-Returns a data.frame row associated with a certain __timestamp__. Reads small "chunks" of the RRA (see the __rrd.cacheBlock__ constant in source code) and uses a package-wide read-ahead cache implemented as an [environment](http://stat.ethz.ch/R-manual/R-devel/library/base/html/environment.html) object. The __timestamp__ and __step__ arguments are also used to calculate the row index in the cache to ensure fast indexing (as opposed to looking up by row name, which is known to be much slower in R).
+Returns a data.frame row associated with a certain __timestamp__. Reads small "chunks" of the RRA (see the __rrd.cacheBlock__ constant in source code) and uses a package-wide read-ahead cache implemented as an [environment](http://stat.ethz.ch/R-manual/R-devel/library/base/html/environment.html) object. The __timestamp__ and __step__ arguments are also used to calculate the row index in the cache to ensure fast indexing (as opposed to looking up by row name, which is known to be much slower in R). The cache is guaranteed to store a maximum of __rrd.cacheSize__ rows per RRA.
 
     getVal("filename", "AVERAGE", 15, 1402231740)
 
@@ -76,3 +76,5 @@ Returns a data.frame row associated with a certain __timestamp__. Reads small "c
 
 
 For more information on rrdtool and the rrd format please refer to the official rrdtool [documentation](http://oss.oetiker.ch/rrdtool/doc/index.en.html) and [tutorials](http://oss.oetiker.ch/rrdtool/tut/index.en.html).
+
+A more in-depth description of the package and more examples can be seen [here](http://plamendimitrov.net/r-package-for-working-with-rrd-files/).
