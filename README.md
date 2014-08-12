@@ -77,4 +77,4 @@ Returns a data.frame row associated with a certain __timestamp__. Reads small "c
 
 For more information on rrdtool and the rrd format please refer to the official rrdtool [documentation](http://oss.oetiker.ch/rrdtool/doc/index.en.html) and [tutorials](http://oss.oetiker.ch/rrdtool/tut/index.en.html).
 
-A more in-depth description of the package and more examples can be seen [here](http://plamendimitrov.net/r-package-for-working-with-rrd-files/).
+A more in-depth description of the package and more examples can be seen [here](http://plamendimitrov.net/blog/2014/08/09/r-package-for-working-with-rrd-files/).
