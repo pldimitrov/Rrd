@@ -1,7 +1,7 @@
 Rrd
 ===
 
-R package for working with .rrd files. Uses [librrd](http://oss.oetiker.ch/rrdtool/doc/librrd.en.html) to import the binary data directly into R without exporting it to an intermediate format first.
+R package for working with [RRD](http://oss.oetiker.ch/rrdtool/) files. Uses [librrd](http://oss.oetiker.ch/rrdtool/doc/librrd.en.html) to import the binary data directly into R without exporting it to an intermediate format first.
 
 
 #Installation
