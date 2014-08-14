@@ -72,10 +72,13 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
     status = rrd_fetch_r(filename, cf, &start, &end, &step, &ds_cnt, &ds_namv, &data);
 	if (status != 0 || data == NULL) {
 	    printf("error running rrd_fetch_r\n");
+
 	    if (data)
 		free(data);
+	    printf("freeing ds_namv\n");
 	    if (ds_namv) {
 		for (int k = 0; k < sizeof(ds_namv)/sizeof(char*); k++) {
+		    printf("freeing %d\n", k);
 		    free(ds_namv[k]);
 		}
 		free(ds_namv);
