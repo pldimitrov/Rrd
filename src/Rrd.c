@@ -32,7 +32,7 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
 
     const char *filename;
     const char *cf;
-    char** ds_namv;
+    char** ds_namv = NULL;
 
     time_t start;
     time_t end;
@@ -56,7 +56,7 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
 
     if (access(filename, F_OK) == -1) {
 	printf("file does not exist\n");
-	exit(0);
+	return R_NilValue;
     }
 
     cf = CHAR(asChar(cfIn));
@@ -72,18 +72,12 @@ SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn
     status = rrd_fetch_r(filename, cf, &start, &end, &step, &ds_cnt, &ds_namv, &data);
 	if (status != 0 || data == NULL) {
 	    printf("error running rrd_fetch_r\n");
+	    //rrd_fetch_r is supposed to free ds_namv
+	    //doesn't set to NULL so can't do checks here
 
 	    if (data)
 		free(data);
-	    printf("freeing ds_namv\n");
-	    if (ds_namv) {
-		for (int k = 0; k < sizeof(ds_namv)/sizeof(char*); k++) {
-		    printf("freeing %d\n", k);
-		    free(ds_namv[k]);
-		}
-		free(ds_namv);
-	    }
-	    exit(0);
+	    return R_NilValue;
 	}
 
     printf("size of data %d start %d end %d step %d ds_cnt %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, step, ds_cnt);
@@ -332,7 +326,7 @@ SEXP smartImportRRD(SEXP filenameIn){
     filename  = CHAR(asChar(filenameIn));
     if (access(filename, F_OK) == -1) {
 	printf("file does not exist\n");
-	exit(0);
+	return R_NilValue;
     }
 
 
@@ -345,7 +339,7 @@ SEXP smartImportRRD(SEXP filenameIn){
 
     if (rrdInfo == NULL) {
 	printf("getting rrd info failed");
-	exit(0);
+	return R_NilValue;
     }
 
 
@@ -355,7 +349,7 @@ SEXP smartImportRRD(SEXP filenameIn){
     if (rraInfoList == NULL) {
 	printf("getting rra info failed\n");
 	free(rrdInfo);
-	exit(0);
+	return R_NilValue;
 
     }
     
@@ -370,7 +364,7 @@ SEXP smartImportRRD(SEXP filenameIn){
 	printf("memory allocation error");
 	free(rrdInfo);
 	freeRraInfo(rraInfoList);
-	exit(0);
+	return R_NilValue;
     }
 
 
@@ -408,14 +402,7 @@ SEXP smartImportRRD(SEXP filenameIn){
 	    free(startAr);
 	    if (data)
 		free(data);
-	    if (ds_namv) {
-		for (int k = 0; k < sizeof(ds_namv)/sizeof(char*); k++) {
-		    free(ds_namv[k]);
-		}
-		free(ds_namv);
-	    }
-	    //TODO unprotect how many times?
-	    exit(0);
+	    return R_NilValue;
 	}
 
 
@@ -527,7 +514,7 @@ SEXP getFirst(SEXP filenameIn, SEXP cfIn, SEXP stepIn)  {
     filename  = CHAR(asChar(filenameIn));
 
     if (access(filename, F_OK) == -1) {
-	exit(0);
+	return R_NilValue;
     }
 
     cf = CHAR(asChar(cfIn));
@@ -536,7 +523,7 @@ SEXP getFirst(SEXP filenameIn, SEXP cfIn, SEXP stepIn)  {
     rrdInfo = rrd_info_r(filename);
 
     if (rrdInfo == NULL) {
-	exit(0);
+	return R_NilValue;
     }
 
 
@@ -544,7 +531,7 @@ SEXP getFirst(SEXP filenameIn, SEXP cfIn, SEXP stepIn)  {
 
     if (rraInfoList == NULL) {
 	free(rrdInfo);
-	exit(0);
+	return R_NilValue;
 
     }
 
