@@ -4,6 +4,10 @@ Rrd
 R package for working with [RRD](http://oss.oetiker.ch/rrdtool/) files. Uses [librrd](http://oss.oetiker.ch/rrdtool/doc/librrd.en.html) to import the binary data directly into R without exporting it to an intermediate format first.
 
 
+# Introduction to RRD
+
+For an introduction to RRD database, see https://oss.oetiker.ch/rrdtool/tut/rrd-beginners.en.html
+
 # Installation
 
 ## Pre-requisites
@@ -35,7 +39,12 @@ In R:
 library(Rrd)
 ```
 
-## importRRD(filename, consolidation function, start, end, step)
+
+## importRRD()
+
+```r
+importRRD(filename, consolidation function, start, end, step)
+```
 
 Finds the RRA that best matches the `consolidation function` and the `step` and imports all values (from all data stores) in that RRA that are between timestamp `start` and `end`. `start` is not included in the result.
 
@@ -62,7 +71,9 @@ head(rra)
 
 
 
-## importRRD(filename)
+```r
+importRRD(filename)
+```
 
 Retrieves the metadata from the RRD file and imports all values from this file - each RRA, each data store, from the first to the last timestamp. 
 
@@ -86,8 +97,11 @@ head(rrd$AVERAGE15)
     1402144350 1402144350   0   0
 
 
+## getVal()
 
-## getVal(filename, consolidation function, step, timestamp)
+```r
+getVal(filename, consolidation function, step, timestamp)
+```
 
 Returns a `data.frame` row associated with a certain `timestamp`. Reads small "chunks" of the RRA (see the `rrd.cacheBlock` constant in source code) and uses a package-wide read-ahead cache implemented as an [environment](http://stat.ethz.ch/R-manual/R-devel/library/base/html/environment.html) object. The `timestamp` and `step` arguments are also used to calculate the row index in the cache to ensure fast indexing (as opposed to looking up by row name, which is known to be much slower in R). The cache is guaranteed to store a maximum of `rrd.cacheSize` rows per RRA.
 

@@ -19,6 +19,8 @@
 #' 
 #' @param start start
 #' @param end end
+#' 
+#' @references https://oss.oetiker.ch/rrdtool/doc/rrdfetch.en.html
 #'
 #' @return Returns a list of data.frames with labels constructed as "consolidation function" + "step" - e.g. "AVERAGE15".
 #' @export
@@ -26,24 +28,29 @@
 #'
 # @examples
 importRRD <- function(filename, cf, start, end, step) {
-  assert_that(is.character(filename))
-  
-  assert_that(file.exists(filename))
   
   if (missing(cf) || missing(start) || missing(end) || missing(step)) {
-    .Call("smartImportRRD", filename, PACKAGE = "Rrd")
+    .smart_import_rrd(filename)
   } else {
     assert_that(is.character(cf))
     assert_that(cf %in% c("AVERAGE", "MIN", "MAX", "LAST"))
-    assert_that(is.numeric(start))
-    assert_that(is.numeric(end))
-    assert_that(is.numeric(step))
+    assert_that(is.time(start))
+    assert_that(is.time(end))
+    assert_that(is.integer(step))
+    
+    start <- as.numeric(start)
+    end <- as.numeric(end)
     
     cf <- match.arg(cf, c("AVERAGE", "MIN", "MAX", "LAST"))
-    .Call("importRRD", filename, cf, start, end, step, PACKAGE = "Rrd")
+    .import_rrd(filename, cf, start, end, step)
   }
 }
 
 
+is.POSIXct <- function(x){
+  inherits(x, "POSIXct")
+}
 
-
+is.time <- function(x){
+  is.POSIXct(x) || is.numeric(x)
+}

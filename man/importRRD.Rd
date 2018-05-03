@@ -32,6 +32,9 @@ The returned \code{data.frame} has the timestamp and the data stores as separate
 
 \code{importRRD(filename)} first reads the metadata in the RRD and adjusts the parameters accordingly in order to expose all RRAs in their entirety.
 }
+\references{
+https://oss.oetiker.ch/rrdtool/doc/rrdfetch.en.html
+}
 \seealso{
 Other rrd functions: \code{\link{getVal}}
 }

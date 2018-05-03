@@ -16,3 +16,5 @@ Imports:
 License: MIT + file LICENSE
 LinkingTo: 
     Rcpp
+Suggests: 
+    testthat
