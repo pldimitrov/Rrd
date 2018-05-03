@@ -1,9 +1,18 @@
 Package: Rrd
 Type: Package
 Title: Import data from a RRD file into R
-Version: 1.0
-Date: 2014-06-01
+Version: 0.1.0.9000
+Date: 2018-05-02
 Author: Plamen Dimitrov
 Maintainer: Plamen Dimitrov <dim.plamen@gmail.com>
-Description: The package uses librrd to import the numerical data in a rrd database directly into R data structures without using intermediate formats.
-License: What license is it under?
+Description: The package uses librrd to import the numerical data in a rrd 
+    database directly into R data structures without using intermediate formats.
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.0.1
+NeedsCompilation: yes
+Imports: 
+    assertthat,
+    Rcpp
+License: MIT + file LICENSE
+LinkingTo: 
+    Rcpp

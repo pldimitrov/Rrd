@@ -1,4 +1,3 @@
 CC=gcc
 
 PKG_LIBS = -lrrd
-PKG_CPPFLAGS = -g
