@@ -42,9 +42,9 @@ void free_rra_info(rraInfo* rraInfoOut) {
 void print_rra_info(rraInfo* rraInfoIn) {
   rraInfo* rraInfoTmp = rraInfoIn;
   while (rraInfoTmp) {
-    printf("cf %s\n", rraInfoTmp->cf);
-    printf("- rows  : %ld\n", rraInfoTmp->rows);
-    printf("- pdp_per_row: %ld\n", rraInfoTmp->pdp_per_row);
+    // printf("cf %s\n", rraInfoTmp->cf);
+    // printf("- rows  : %ld\n", rraInfoTmp->rows);
+    // printf("- pdp_per_row: %ld\n", rraInfoTmp->pdp_per_row);
     rraInfoTmp = rraInfoTmp->next;
   }
 }
@@ -152,7 +152,7 @@ SEXP get_first(SEXP filenameIn, SEXP cfIn, SEXP stepIn)  {
   char *filename = (char *)CHAR(asChar(filenameIn));
   
   if (access(filename, F_OK) == -1) {
-    printf("file does not exist\n");
+    // printf("file does not exist\n");
     return R_NilValue;
   }
   
@@ -162,14 +162,14 @@ SEXP get_first(SEXP filenameIn, SEXP cfIn, SEXP stepIn)  {
   rrdInfo = rrd_info_r(filename);
   
   if (rrdInfo == NULL) {
-    printf("error getting rrd info");
+    // printf("error getting rrd info");
     return R_NilValue;
   }
   
   rraInfoList = get_rra_info(rrdInfo, &rraCnt, &step);
   
   if (rraInfoList == NULL) {
-    printf("error getting rrd info");
+    // printf("error getting rrd info");
     free(rrdInfo);
     return R_NilValue;
   }
