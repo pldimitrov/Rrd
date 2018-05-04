@@ -7,14 +7,12 @@ Author: Plamen Dimitrov
 Maintainer: Plamen Dimitrov <dim.plamen@gmail.com>
 Description: The package uses librrd to import the numerical data in a rrd 
     database directly into R data structures without using intermediate formats.
+SystemRequirements: librrd-dev
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.0.1
 NeedsCompilation: yes
 Imports: 
-    assertthat,
-    Rcpp
+    assertthat
 License: MIT + file LICENSE
-LinkingTo: 
-    Rcpp
 Suggests: 
     testthat

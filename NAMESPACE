@@ -2,7 +2,8 @@
 
 export(getVal)
 export(importRRD)
-importFrom(Rcpp,sourceCpp)
+export(read_rra)
+export(read_rrd)
 importFrom(assertthat,assert_that)
 importFrom(utils,tail)
 useDynLib(Rrd, .registration = TRUE)
