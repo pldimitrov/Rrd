@@ -17,8 +17,16 @@ Pre-requisites
 
 In order to build the package from source you need [librrd](http://oss.oetiker.ch/rrdtool/doc/librrd.en.html). Installing [RRDtool](http://oss.oetiker.ch/rrdtool/) from your package manager will usually also install the library.
 
+In ubuntu:
+
 ``` sh
 sudo apt-get install librrd-dev
+```
+
+In RHEL / CentOD:
+
+``` sh
+sudo yum install librrd-dev
 ```
 
 `Rrd` is not yet on CRAN

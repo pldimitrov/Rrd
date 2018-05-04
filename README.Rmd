@@ -34,10 +34,14 @@ In ubuntu:
 sudo apt-get install librrd-dev
 ```
 
+In RHEL / CentOD:
+
+```sh
+sudo yum install librrd-dev
+```
 
 
 `Rrd` is not yet on CRAN
-
 
 And the development version from [GitHub](https://github.com/) with:
 
