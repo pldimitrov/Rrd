@@ -16,7 +16,8 @@
 #' Returns a single `data.frame` row. Ensures no more than `rrd.cacheSize rows`
 #' per RRA are kept in the cache.
 #' 
-#' @inheritParams importRRD
+#' @inheritParams read_rrd
+#' @inheritParams read_rra
 #' 
 #' @param timestamp timestamp 
 #'
@@ -43,7 +44,7 @@ getVal <- function(filename, cf, step, timestamp) {
       stop("rra not matched")
     }
     
-    tmpDF <- importRRD(
+    tmpDF <- read_rra(
       filename, 
       cf, 
       max(rrd.first[[key]], timestamp - rrd.cacheBlock*step), 
@@ -69,7 +70,7 @@ getVal <- function(filename, cf, step, timestamp) {
     # avoid getting more than rrd.cacheSize rows per RRA
     if ( ((lastTimestamp - timestamp)/step > rrd.cacheSize) ||  
          ((timestamp - rrd.cache[[key]][1, 1])/step > rrd.cacheSize) ) {
-      tmpDF <- importRRD(
+      tmpDF <- read_rra(
         filename, 
         cf, 
         max(rrd.first[[key]], timestamp - rrd.cacheBlock*step), 
@@ -84,7 +85,7 @@ getVal <- function(filename, cf, step, timestamp) {
     else {
       #if requested timestamp is lower than the first in cache
       if (timestamp < rrd.cache[[key]][1, 1]) {
-        tmpDF = importRRD(
+        tmpDF = read_rra(
           filename, 
           cf, 
           max(rrd.first[[key]], timestamp - rrd.cacheBlock*step), 
@@ -99,7 +100,7 @@ getVal <- function(filename, cf, step, timestamp) {
       
       # if requested timestamp is higher than the last in cache
       if (timestamp > lastTimestamp) {
-        tmpDF = importRRD(
+        tmpDF = read_rra(
           filename, 
           cf, 
           lastTimestamp, 
