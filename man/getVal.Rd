@@ -37,5 +37,6 @@ Returns a single \code{data.frame} row. Ensures no more than \code{rrd.cacheSize
 per RRA are kept in the cache.
 }
 \seealso{
-Other rrd functions: \code{\link{importRRD}}
+Other rrd functions: \code{\link{read_rra}},
+  \code{\link{read_rrd}}
 }
