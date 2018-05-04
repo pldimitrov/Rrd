@@ -5,8 +5,6 @@
 #include <stdio.h>
 
 
-
-
 // demonstrates how c arrays are imported in R
 //
 // SEXP exposeArray(char c){
@@ -22,101 +20,16 @@
 //   return out;
 // }
 
-
-/* A wrapper for rrd_fetch_r */
-/* Finds the RRA of interest that best matches cfIn, and stepIn in filenameIn */
-/* then returns an R data.frame that contain the RRA values fitting between */
-/* timestamps startIn (non incl) and sendIn */
-SEXP importRRD(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn)  {
-  
-  rrd_value_t *data;
-  
-  unsigned long step, ds_cnt;
-  int status, size, ds, i, timeStamp;
-
-  // char *filename;
-  // const char *cf;
-  char** ds_namv = NULL;
-  
-  time_t start, end;
-  SEXP out, vec, nam, rowNam, cls;
-  
-  const char *filename  = CHAR(asChar(filenameIn));
-  
-  const char *cf = CHAR(asChar(cfIn));
-  start = (time_t) asInteger(startIn);
-  end = (time_t) asInteger(endIn);
-  
-  step  = (unsigned long) asInteger(stepIn);
-  
-  //calling rrdfetch
-  status = rrd_fetch_r(filename, cf, &start, &end, &step, &ds_cnt, &ds_namv, &data);
-  if (status != 0 || data == NULL) {
-    // printf("error running rrd_fetch_r\n");
-    // rrd_fetch_r is supposed to free ds_namv
-    // doesn't set to NULL so can't do checks here
-    if (data)
-      free(data);
-    return R_NilValue;
-  }
-  
-  // printf("size of data %d start %d end %d step %d ds_cnt %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, step, ds_cnt);
-  
-  //turns out rrd_fetch does not include start in data
-  size = (end - start)/step - 1;
-  out = PROTECT(allocVector(VECSXP, ds_cnt + 1) );
-  vec = PROTECT(allocVector(INTSXP, size));
-  PROTECT(rowNam = allocVector(STRSXP, size));
-  
-  //turns out rrd_fetch does not include start in data
-  timeStamp = start + step;
-  
-  for (i = 0; i < size; i++) {
-    INTEGER(vec)[i] = timeStamp;
-    timeStamp += step;
-  }
-  SET_VECTOR_ELT(out, 0, vec);
-  setAttrib(out, R_RowNamesSymbol, vec);
-  
-  PROTECT(nam = allocVector(STRSXP, ds_cnt + 1));
-  SET_STRING_ELT(nam, 0, mkChar("timestamp"));
-  
-  for (ds = 0; ds < ds_cnt; ds++){
-    SET_STRING_ELT(nam, ds + 1, mkChar(ds_namv[ds]));
-    
-    vec = PROTECT(allocVector(REALSXP, size));
-    for (i = 0; i < size; i++){
-      /* // printf("iterating.. i = %d\n", i); */
-      REAL(vec)[i] = data[ds + i*ds_cnt];
-    }
-    SET_VECTOR_ELT(out, ds + 1, vec);
-  }
-  
-  PROTECT(cls = allocVector(STRSXP, 1)); // class attribute
-  SET_STRING_ELT(cls, 0, mkChar("data.frame"));
-  classgets(out, cls);
-  namesgets(out, nam);
-  
-  free(data);
-  for (int k = 0; k < sizeof(ds_namv)/sizeof(char*); k++) {
-    free(ds_namv[k]);
-  }
-  free(ds_namv);
-  UNPROTECT(ds_cnt + 5);
-  return out;
-}
-
-
 // linked list we use to store the rra info
 typedef struct _rraInfo {
   char cf[80];
   unsigned long rows;
-  unsigned long perRow;
+  unsigned long pdp_per_row;
   struct _rraInfo* next;
 } rraInfo; 
 
 
-void freeRraInfo(rraInfo* rraInfoOut) {
+void free_rra_info(rraInfo* rraInfoOut) {
   while (rraInfoOut) {
     rraInfo* tmp = rraInfoOut;
     rraInfoOut = rraInfoOut->next;
@@ -126,21 +39,22 @@ void freeRraInfo(rraInfo* rraInfoOut) {
 }
 
 
-void printRraInfo(rraInfo* rraInfoIn) {
+void print_rra_info(rraInfo* rraInfoIn) {
   rraInfo* rraInfoTmp = rraInfoIn;
   while (rraInfoTmp) {
-    // printf("rows %d\n", rraInfoTmp->rows);
-    // printf("perRow %d\n", rraInfoTmp->perRow);
-    // printf("cf %s\n", rraInfoTmp->cf);
+    printf("cf %s\n", rraInfoTmp->cf);
+    printf("- rows  : %ld\n", rraInfoTmp->rows);
+    printf("- pdp_per_row: %ld\n", rraInfoTmp->pdp_per_row);
     rraInfoTmp = rraInfoTmp->next;
   }
 }
 
 
-/* reads a rrd_info_t returned by rrdinfo and */
-/* returns the information we need in a rraInfo linked list */
-/* returns the rra count and the global step by reference */
-rraInfo* getRraInfo (rrd_info_t* rrdInfoIn, int *rraCntOut, unsigned long *stepOut){
+/* reads a rrd_info_t returned by rrdinfo and 
+ * returns the information we need in a rraInfo linked list 
+ * returns the rra count and the global step by reference
+ */
+rraInfo* get_rra_info (rrd_info_t* rrdInfoIn, int *rraCntOut, unsigned long *stepOut){
   unsigned long step = 0;
   int rraCnt = 0;
   
@@ -176,7 +90,7 @@ rraInfo* getRraInfo (rrd_info_t* rrdInfoIn, int *rraCntOut, unsigned long *stepO
       if (rraCnt > 0) {
         rraInfoTmp->next = malloc(sizeof(rraInfo));
         if (rraInfoTmp->next == NULL) {
-          freeRraInfo(rraInfoOut);
+          free_rra_info(rraInfoOut);
           return NULL;
         }
         rraInfoTmp = rraInfoTmp->next;
@@ -193,7 +107,7 @@ rraInfo* getRraInfo (rrd_info_t* rrdInfoIn, int *rraCntOut, unsigned long *stepO
     
     if (!strcmp(rrdInfoIn->key, perRowKey)){
       // printf("matching perRowKey\n");
-      rraInfoTmp->perRow = rrdInfoIn->value.u_cnt;
+      rraInfoTmp->pdp_per_row = rrdInfoIn->value.u_cnt;
       rraCnt++;
       
       //generate keys for next RRA
@@ -216,18 +130,91 @@ rraInfo* getRraInfo (rrd_info_t* rrdInfoIn, int *rraCntOut, unsigned long *stepO
 }
 
 
-/*  A wrapper for rrd_fetch_r that first gets some information for the RRD  */
-/*  and uses that information to expose all values in the file  */
+/* gets the first timestamp for the RRA identified by cfIn and stepIn in filenameIn  
+ * 
+ */
+SEXP get_first(SEXP filenameIn, SEXP cfIn, SEXP stepIn)  {
+  const char *cf;
+  
+  unsigned long step;
+  unsigned long curStep;
+  
+  rrd_info_t *rrdInfo;
+  
+  rraInfo* rraInfoList;
+  rraInfo* rraInfoTmp;
+  
+  int i;
+  int rraCnt;
+  
+  SEXP out;
+  
+  char *filename = (char *)CHAR(asChar(filenameIn));
+  
+  if (access(filename, F_OK) == -1) {
+    printf("file does not exist\n");
+    return R_NilValue;
+  }
+  
+  cf = CHAR(asChar(cfIn));
+  
+  curStep  = (unsigned long) asInteger(stepIn);
+  rrdInfo = rrd_info_r(filename);
+  
+  if (rrdInfo == NULL) {
+    printf("error getting rrd info");
+    return R_NilValue;
+  }
+  
+  rraInfoList = get_rra_info(rrdInfo, &rraCnt, &step);
+  
+  if (rraInfoList == NULL) {
+    printf("error getting rrd info");
+    free(rrdInfo);
+    return R_NilValue;
+  }
+  
+  rraInfoTmp = rraInfoList;
+  
+  i = 0;
+  while (rraInfoTmp) {
+    if (!strcmp(cf, rraInfoTmp->cf) && (curStep == step * rraInfoTmp->pdp_per_row)) {
+      break;
+    }
+    i++;
+    rraInfoTmp = rraInfoTmp->next;
+  }
+  
+  out = PROTECT(allocVector(INTSXP, 1));
+  if (i < rraCnt) {
+    INTEGER(out)[0] = rrd_first_r(filename, i);
+  } else {
+    out = R_NilValue;
+  }
+  
+  free_rra_info(rraInfoList);
+  free(rrdInfo);
+  UNPROTECT(1);
+  
+  return out;
+}
 
-/*  Returns a list (one for each RRA) of R data.frames   */
-/*  gets the cosolidation functions and computes the step for each RRA  */
-/*  gets the first and last timestamp for each RRA  */
-/*  calls rrd_fetch_r and copies all values to R data frames  */
-SEXP smartImportRRD(SEXP filenameIn){
+
+/* A wrapper for rrd_fetch_r that first gets some information for the RRD
+ * and uses that information to expose all values in the file
+ * 
+ * Returns a list (one for each RRA) of R data.frames
+ * gets the cosolidation functions and computes the step for each RRA
+ * gets the first and last timestamp for each RRA
+ * calls rrd_fetch_r and copies all values to R data frames
+ * 
+ * https://github.com/oetiker/rrdtool-1.x/blob/master/src/rrd_fetch.c
+ */
+SEXP smart_import_rrd(SEXP filenameIn){
   
   int rraCnt, status, size, i, ds, j, timeStamp;
-  unsigned long curStep, ds_cnt, step;
-  char **ds_namv;
+  unsigned long curStep, n_datasets, step;
+  char **ds_namv; // names of data sources
   // char *filename;
   
   time_t first, last, start, end, *startAr;
@@ -238,7 +225,7 @@ SEXP smartImportRRD(SEXP filenameIn){
   
   SEXP out, vec, rraSexpList, rraNames, nam, rowNam, cls;
   
-  const char *filename = CHAR(asChar(filenameIn));
+  char *filename = (char *)CHAR(asChar(filenameIn));
 
   //getting last time stamp
   last = rrd_last_r(filename);
@@ -252,7 +239,7 @@ SEXP smartImportRRD(SEXP filenameIn){
   }
   
   //obtain linked list containing the parameters for each RRA
-  rraInfoList = getRraInfo(rrdInfo, &rraCnt, &step);
+  rraInfoList = get_rra_info(rrdInfo, &rraCnt, &step);
   
   if (rraInfoList == NULL) {
     // printf("getting rra info failed\n");
@@ -260,14 +247,14 @@ SEXP smartImportRRD(SEXP filenameIn){
     return R_NilValue;
   }
   
-  printRraInfo(rraInfoList);
+  // print_rra_info(rraInfoList);
   
   startAr = malloc(rraCnt * sizeof(time_t));
   
   if (startAr == NULL) {
     // printf("memory allocation error");
     free(rrdInfo);
-    freeRraInfo(rraInfoList);
+    free_rra_info(rraInfoList);
     return R_NilValue;
   }
   
@@ -286,33 +273,33 @@ SEXP smartImportRRD(SEXP filenameIn){
   
   i = 0;
   
-  //processing each RRA
+  // processing each RRA
   while (rraInfoTmp) {
     start = startAr[i];
     end = last;
-    curStep = step * rraInfoTmp->perRow;
-    status = rrd_fetch_r(filename, rraInfoTmp->cf, &start, &end, &curStep, &ds_cnt, &ds_namv, &data);
+    curStep = step * rraInfoTmp->pdp_per_row;
+    status = rrd_fetch_r(filename, rraInfoTmp->cf, &start, &end, &curStep, &n_datasets, &ds_namv, &data);
 
     if (status != 0 || data == NULL) {
       // printf("error running rrd_fetch_r\n");
       free(rrdInfo);
-      freeRraInfo(rraInfoList);
+      free_rra_info(rraInfoList);
       free(startAr);
       if (data)
         free(data);
       return R_NilValue;
     }
     
-    //rrd_fetch does not include start
+    // rrd_fetch does not include start
     size = (end - start)/curStep - 1;
     // printf("size %d\n", size);
     
-    rraSexpList = PROTECT(allocVector(VECSXP, ds_cnt + 1));
+    rraSexpList = PROTECT(allocVector(VECSXP, n_datasets + 1));
     
     vec = PROTECT(allocVector(INTSXP, size));
     PROTECT(rowNam = allocVector(STRSXP, size));
     
-    //rrd_fetch does not include start
+    // rrd_fetch does not include start
     timeStamp = start + curStep;
     
     for (int j = 0; j < size; j++) {
@@ -320,22 +307,22 @@ SEXP smartImportRRD(SEXP filenameIn){
       timeStamp += curStep;
     }
     
-    //setting row names
+    // setting row names
     SET_VECTOR_ELT(rraSexpList, 0, vec);
     setAttrib(rraSexpList, R_RowNamesSymbol, vec);
     
-    PROTECT(nam = allocVector(STRSXP, ds_cnt + 1));
+    PROTECT(nam = allocVector(STRSXP, n_datasets + 1));
     SET_STRING_ELT(nam, 0, mkChar("timestamp"));
     
-    //populating data frames with data
-    for (ds = 0; ds < ds_cnt; ds++){
+    // populating data frames with data
+    for (ds = 0; ds < n_datasets; ds++){
       SET_STRING_ELT(nam, ds + 1, mkChar(ds_namv[ds]));
       vec = PROTECT(allocVector(REALSXP, size));
       
       for (j = 0; j < size; j++){
-        REAL(vec)[j] = data[ds + j*ds_cnt];
+        REAL(vec)[j] = data[ds + j * n_datasets];
       }
-      //adding ds vector to data frame
+      // adding ds vector to data frame
       SET_VECTOR_ELT(rraSexpList, ds + 1, vec);
     }
     
@@ -349,8 +336,9 @@ SEXP smartImportRRD(SEXP filenameIn){
     char rraNameString[80];
     char stepString[40];
     
-    sprintf(stepString, "%d", curStep);
+    sprintf(stepString, "%ld", curStep);
     strcpy(rraNameString, rraInfoTmp->cf);
+    // strcat(rraNameString, "_");
     strcat(rraNameString, stepString);
     SET_STRING_ELT(rraNames, i, mkChar(rraNameString));
     
@@ -362,7 +350,7 @@ SEXP smartImportRRD(SEXP filenameIn){
   
   setAttrib(out, R_NamesSymbol, rraNames);
   
-  freeRraInfo(rraInfoList);
+  free_rra_info(rraInfoList);
   free(startAr);
   free(rrdInfo);
   for (int k = 0; k < sizeof(ds_namv)/sizeof(char*); k++) {
@@ -370,75 +358,96 @@ SEXP smartImportRRD(SEXP filenameIn){
   }
   free(ds_namv);
   
-  UNPROTECT((ds_cnt + 4)*rraCnt + 3);
+  UNPROTECT((n_datasets + 4)*rraCnt + 3);
   
   return out;
 }
 
 
-/*  gets the first timestamp for the RRA identified by cfIn and stepIn in filenameIn  */
-SEXP getFirst(SEXP filenameIn, SEXP cfIn, SEXP stepIn)  {
-  const char *cf;
+/* A wrapper for rrd_fetch_r
+ * Finds the RRA of interest that best matches cfIn, and stepIn in filenameIn 
+ * then returns an R data.frame that contain the RRA values fitting between 
+ * timestamps startIn (non incl) and sendIn
+ */
+SEXP import_rrd(SEXP filenameIn, SEXP cfIn, SEXP startIn, SEXP endIn, SEXP stepIn)  {
   
-  unsigned long step;
-  unsigned long curStep;
+  rrd_value_t *data;
   
-  rrd_info_t *rrdInfo;
+  unsigned long step, n_datasets;
+  int status, size, ds, i, timeStamp;
   
-  rraInfo* rraInfoList;
-  rraInfo* rraInfoTmp;
+  // char *filename;
+  // const char *cf;
+  char** ds_namv = NULL;
   
-  int i;
-  int rraCnt;
-  
-  SEXP out;
+  time_t start, end;
+  SEXP out, vec, nam, rowNam, cls;
   
   const char *filename  = CHAR(asChar(filenameIn));
-
-  if (access(filename, F_OK) == -1) {
-    // printf("file does not exist\n");
+  
+  const char *cf = CHAR(asChar(cfIn));
+  start = (time_t) asInteger(startIn);
+  end = (time_t) asInteger(endIn);
+  
+  step  = (unsigned long) asInteger(stepIn);
+  
+  //calling rrdfetch
+  status = rrd_fetch_r(filename, cf, &start, &end, &step, &n_datasets, &ds_namv, &data);
+  if (status != 0 || data == NULL) {
+    // printf("error running rrd_fetch_r\n");
+    // rrd_fetch_r is supposed to free ds_namv
+    // doesn't set to NULL so can't do checks here
+    if (data)
+      free(data);
     return R_NilValue;
   }
   
-  cf = CHAR(asChar(cfIn));
+  // printf("size of data %d start %d end %d step %d n_datasets %d\n", sizeof(data)/sizeof(rrd_value_t), start, end, step, n_datasets);
   
-  curStep  = (unsigned long) asInteger(stepIn);
-  rrdInfo = rrd_info_r(filename);
+  //turns out rrd_fetch does not include start in data
+  size = (end - start)/step - 1;
+  out = PROTECT(allocVector(VECSXP, n_datasets + 1) );
+  vec = PROTECT(allocVector(INTSXP, size));
+  PROTECT(rowNam = allocVector(STRSXP, size));
   
-  if (rrdInfo == NULL) {
-    // printf("error getting rrd info");
-    return R_NilValue;
+  //turns out rrd_fetch does not include start in data
+  timeStamp = start + step;
+  
+  // probably sets row names
+  for (i = 0; i < size; i++) {
+    INTEGER(vec)[i] = timeStamp;
+    timeStamp += step;
   }
+  SET_VECTOR_ELT(out, 0, vec);
+  setAttrib(out, R_RowNamesSymbol, vec);
   
-  rraInfoList = getRraInfo(rrdInfo, &rraCnt, &step);
+  PROTECT(nam = allocVector(STRSXP, n_datasets + 1));
+  SET_STRING_ELT(nam, 0, mkChar("timestamp"));
   
-  if (rraInfoList == NULL) {
-    // printf("error getting rrd info");
-    free(rrdInfo);
-    return R_NilValue;
-  }
-  
-  rraInfoTmp = rraInfoList;
-  
-  i = 0;
-  while (rraInfoTmp) {
-    if (!strcmp(cf, rraInfoTmp->cf) && (curStep == step*rraInfoTmp->perRow)) {
-      break;
+  for (ds = 0; ds < n_datasets; ds++){
+    SET_STRING_ELT(nam, ds + 1, mkChar(ds_namv[ds]));
+    
+    vec = PROTECT(allocVector(REALSXP, size));
+    for (i = 0; i < size; i++){
+      /* // printf("iterating.. i = %d\n", i); */
+      REAL(vec)[i] = data[ds + i*n_datasets];
     }
-    i++;
-    rraInfoTmp = rraInfoTmp->next;
+    SET_VECTOR_ELT(out, ds + 1, vec);
   }
   
-  out = PROTECT(allocVector(INTSXP, 1));
-  if (i < rraCnt) {
-    INTEGER(out)[0] = rrd_first_r(filename, i);
-  } else {
-    out = R_NilValue;
+  // set class and names of data frame 
+  PROTECT(cls = allocVector(STRSXP, 1)); // class attribute
+  SET_STRING_ELT(cls, 0, mkChar("data.frame"));
+  classgets(out, cls);
+  namesgets(out, nam);
+  
+  free(data);
+  for (int k = 0; k < sizeof(ds_namv)/sizeof(char*); k++) {
+    free(ds_namv[k]);
   }
-  
-  freeRraInfo(rraInfoList);
-  free(rrdInfo);
-  UNPROTECT(1);
-  
+  free(ds_namv);
+  UNPROTECT(n_datasets + 5);
   return out;
 }
+
+
