@@ -1,12 +1,17 @@
-#' Import data from a RRD file into R
+#' Import data from a RRD database into R
 #' 
 #' The package uses `librrd` to import the numerical data in a rrd database
 #' directly into R data structures without using intermediate formats.
 #' 
 #' Exposes two functions:
 #' 
-#' * [importRRD()]
-#' * [getVal()]
+#' * [read_rrd()] to read an entire RRD file
+#' * [read_rra()] to extract a single RRA (round robin archive) from an RRD file
+#' * [getVal()] to extract a single value
+#' 
+#' For more information on rrdtool and the rrd format please refer to the official rrdtool [documentation](http://oss.oetiker.ch/rrdtool/doc/index.en.html) and [tutorials](http://oss.oetiker.ch/rrdtool/tut/index.en.html).
+#' 
+#' You can also read a more in-depth description of the package in a [blog post](http://plamendimitrov.net/blog/2014/08/09/r-package-for-working-with-rrd-files/).
 #' 
 #' 
 #' @name Rrd-package
@@ -16,7 +21,6 @@
 #' Maintainer: Plamen Dimitrov <dim.plamen@@gmail.com>
 #' 
 #' @useDynLib Rrd, .registration = TRUE
-#' @importFrom Rcpp sourceCpp
 #'  
 # @seealso
 #' @references <http://oss.oetiker.ch/rrdtool/doc/index.en.html>
@@ -26,26 +30,6 @@
 #' 
 #' 
 #' @importFrom assertthat assert_that
-#' 
-#' @examples
-#' 
-#' \dontrun{
-#' importRRD("/var/lib/ganglia/rrds/__SummaryInfo__/mem_free.rrd", 
-#'           "AVERAGE", 1402231215, 1402232085, 15)
-#' rrd = importRRD("/var/lib/ganglia/rrds/__SummaryInfo__/mem_free.rrd")
-#' rrd$AVERAGE15
-#' rrd[[1]]
-#' rrd$AVERAGE15$timestamp
-#' rrd$AVERAGE15$sum
-#' rrd$AVERAGE15[1, 1]
-#' rrd$AVERAGE15[1, "sum"]
-#' rrd[["AVERAGE15"]]
-#' rrd$AVERAGE60
-#' getVal("/var/lib/ganglia/rrds/__SummaryInfo__/mem_free.rrd", 
-#'        "AVERAGE", 15, 1402231245)
-#' rrd.cache[["/var/lib/ganglia/rrds/__SummaryInfo__/mem_free.rrdAVERAGE15"]]
-#' }
-#' 
 #' 
 NULL
 
