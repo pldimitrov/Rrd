@@ -220,7 +220,7 @@ SEXP get_first(SEXP filenameIn, SEXP cfIn, SEXP stepIn)  {
 /* describe the contents of an RRD
  * 
  */
-void describe_rrd(SEXP filenameIn){
+SEXP describe_rrd(SEXP filenameIn){
   
   int rraCnt, status, size, i, ds, j, timeStamp;
   unsigned long curStep, n_datasets, step;
@@ -249,6 +249,7 @@ void describe_rrd(SEXP filenameIn){
   free_rra_info(rra_info_list);
   free(rrdInfo);
   
+  return(R_NilValue);
 }
 
 
