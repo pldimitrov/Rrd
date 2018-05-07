@@ -15,4 +15,5 @@
   assert_that(is.character(filename))
   assert_that(file.exists(filename))
   .Call("describe_rrd", filename, PACKAGE = "Rrd")
+  NULL
 }
