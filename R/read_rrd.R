@@ -13,12 +13,13 @@
 #'
 #' @example inst/examples/example_read_rrd.R
 read_rrd <- function(filename) {
-    dat <- .smart_import_rrd(filename)
-    for (i in seq_along(dat)){
-      dat[[i]] <- as_tibble(dat[[i]])
-      dat[[i]][["timestamp"]] <- as.POSIXct(dat[[i]][["timestamp"]], origin = "1970-01-01")
-    }
-    dat
+  filename <- normalizePath(filename)
+  dat <- .smart_import_rrd(filename)
+  for (i in seq_along(dat)){
+    dat[[i]] <- as_tibble(dat[[i]])
+    dat[[i]][["timestamp"]] <- as.POSIXct(dat[[i]][["timestamp"]], origin = "1970-01-01")
+  }
+  dat
 }
 
 #' Describes content of a RRD file.
@@ -29,6 +30,7 @@ read_rrd <- function(filename) {
 #' @family rrd functions
 #' @example inst/examples/example_describe_rrd.R
 describe_rrd <- function(filename){
+  filename <- normalizePath(filename)
   .describe_rrd(filename)
   invisible(NULL)
 }
@@ -62,6 +64,7 @@ read_rra <- function(filename, cf, start, end, step){
   assert_that(is.time(end))
   assert_that(is.integer(step))
   
+  filename <- normalizePath(filename)
   start <- as.numeric(start)
   end <- as.numeric(end)
   
