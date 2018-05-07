@@ -7,3 +7,8 @@ rrd.first = new.env(hash = TRUE)
 # determines the number of rows to fetch on a cache-miss
 rrd.cacheBlock = 50
 rrd.cacheSize = 1000
+
+
+.onUnload <- function (libpath) {
+  library.dynam.unload("Rrd", libpath)
+}
