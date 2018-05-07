@@ -31,13 +31,13 @@ Installing [RRDtool](http://oss.oetiker.ch/rrdtool/) from your package manager w
 In ubuntu:
 
 ```sh
-sudo apt-get install librrd-dev
+sudo apt-get install rrdtool librrd4 librrd-dev
 ```
 
 In RHEL / CentOS:
 
 ```sh
-sudo yum install librrd-dev
+sudo yum install rrdtool librrd4 librrd-dev
 ```
 
 

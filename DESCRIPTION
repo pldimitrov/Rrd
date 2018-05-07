@@ -7,7 +7,7 @@ Author: Plamen Dimitrov <dim.plamen@gmail.com>
 Maintainer: Andrie de Vries <apdevries@gmail.com>
 Description: Makes it easy to import the data from a RRD database directly into
    R data structures.
-SystemRequirements: librrd-dev
+SystemRequirements: librrd-dev, rrdtool and librrd4
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.0.1
 NeedsCompilation: yes

@@ -20,13 +20,13 @@ In order to build the package from source you need [librrd](http://oss.oetiker.c
 In ubuntu:
 
 ``` sh
-sudo apt-get install librrd-dev
+sudo apt-get install rrdtool librrd4 librrd-dev
 ```
 
 In RHEL / CentOS:
 
 ``` sh
-sudo yum install librrd-dev
+sudo yum install rrdtool librrd4 librrd-dev
 ```
 
 `Rrd` is not yet on CRAN
