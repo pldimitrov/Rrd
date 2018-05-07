@@ -47,9 +47,9 @@ In R:
 library(Rrd)
 ```
 
-### Read an entire RRD file:
+### Describe the contents of an RRD file:
 
-Use `read_rrd()`:
+Use `describe_rrd()`:
 
 ``` r
 rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "Rrd")
@@ -66,7 +66,13 @@ describe_rrd(rrd_cpu_0)
 #> [8] AVERAGE_86400 (1825 rows)
 #> [9] MIN_86400 (1825 rows)
 #> [10] MAX_86400 (1825 rows)
+```
 
+### Read an entire RRD file:
+
+Use `read_rrd()`:
+
+``` r
 cpu <- read_rrd(rrd_cpu_0)
 
 names(cpu)
@@ -100,8 +106,6 @@ tail(cpu$AVERAGE60$sys)
 Use `read_rra()`:
 
 ``` r
-rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "Rrd")
-
 start_time <- as.POSIXct("2018-05-01") # timestamp with data in example
 end_time <- as.POSIXct("2018-05-02") # timestamp with data in example
 avg_60 <- read_rra(rrd_cpu_0, cf = "AVERAGE", step = 60L, 
