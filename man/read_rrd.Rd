@@ -18,6 +18,8 @@ Reads the metadata in the RRD and adjusts the parameters accordingly in order to
 \examples{
 rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "Rrd")
 
+describe_rrd(rrd_cpu_0)
+
 cpu <- read_rrd(rrd_cpu_0)
 names(cpu)
 head(cpu[[1]])
@@ -31,6 +33,6 @@ tail(
 \url{https://oss.oetiker.ch/rrdtool/doc/rrdfetch.en.html}
 }
 \seealso{
-Other rrd functions: \code{\link{getVal}},
-  \code{\link{read_rra}}
+Other rrd functions: \code{\link{describe_rrd}},
+  \code{\link{getVal}}, \code{\link{read_rra}}
 }

@@ -9,16 +9,29 @@
 #' @return Returns a named list of data.frames. Each data frame corresponds to an RRA (see [read_rra()]).  The list has names constructed as "consolidation function" + "step" - e.g. "AVERAGE15".
 #' @export
 #' @family rrd functions
+#' @importFrom tibble as_tibble
 #'
 #' @example inst/examples/example_read_rrd.R
 read_rrd <- function(filename) {
     dat <- .smart_import_rrd(filename)
     for (i in seq_along(dat)){
+      dat[[i]] <- as_tibble(dat[[i]])
       dat[[i]][["timestamp"]] <- as.POSIXct(dat[[i]][["timestamp"]], origin = "1970-01-01")
     }
     dat
 }
 
+#' Describes content of a RRD file.
+#' 
+#' @inheritParams read_rrd
+#' 
+#' @export
+#' @family rrd functions
+#' @example inst/examples/example_describe_rrd.R
+describe_rrd <- function(filename){
+  .describe_rrd(filename)
+  invisible(NULL)
+}
 
 #' Imports the RRA data from an RRD database
 #' 
@@ -54,6 +67,7 @@ read_rra <- function(filename, cf, start, end, step){
   
   cf <- match.arg(cf, c("AVERAGE", "MIN", "MAX", "LAST"))
   dat <- .import_rrd(filename, cf, start, end, step)
+  dat <- as_tibble(dat)
   dat[["timestamp"]] <- as.POSIXct(dat[["timestamp"]], origin = "1970-01-01")
   dat
 }
