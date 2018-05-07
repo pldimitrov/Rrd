@@ -52,7 +52,7 @@ void print_rra_info(rra_info* rraInfoIn, int count, long unsigned int step) {
     pdp_per_row = rra_info_tmp->pdp_per_row;
     rra_step = step * pdp_per_row;
     
-    Rprintf("[%d] %s_%ld\n", i, rra_info_tmp->cf, rra_step);
+    Rprintf("[%d] %s_%ld (%ld rows)\n", i, rra_info_tmp->cf, rra_step, rra_info_tmp->rows);
     
     /*
     Rprintf("- cf: %s\n", rra_info_tmp->cf);
