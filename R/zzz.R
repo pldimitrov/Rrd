@@ -10,5 +10,5 @@ rrd.cacheSize = 1000
 
 
 .onUnload <- function (libpath) {
-  library.dynam.unload("Rrd", libpath)
+  library.dynam.unload("rrd", libpath)
 }

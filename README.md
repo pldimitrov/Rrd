@@ -1,9 +1,9 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-Rrd
+rrd
 ===
 
-The `Rrd` package allows you to read data from an [RRD](http://oss.oetiker.ch/rrdtool/) database.
+The `rrd` package allows you to read data from an [RRD](http://oss.oetiker.ch/rrdtool/) database.
 
 Internally it uses [librrd](http://oss.oetiker.ch/rrdtool/doc/librrd.en.html) to import the binary data directly into R without exporting it to an intermediate format first.
 
@@ -12,30 +12,33 @@ For an introduction to RRD database, see <https://oss.oetiker.ch/rrdtool/tut/rrd
 Installation
 ------------
 
-Pre-requisites
---------------
+### Pre-requisites
 
 In order to build the package from source you need [librrd](http://oss.oetiker.ch/rrdtool/doc/librrd.en.html). Installing [RRDtool](http://oss.oetiker.ch/rrdtool/) from your package manager will usually also install the library.
 
 In ubuntu:
 
 ``` sh
-sudo apt-get install rrdtool librrd4 librrd-dev
+sudo apt-get install rrdtool librrd-dev
 ```
 
 In RHEL / CentOS:
 
 ``` sh
-sudo yum install rrdtool librrd4 librrd-dev
+sudo yum install rrdtool rrdtool-devel
 ```
 
-`Rrd` is not yet on CRAN
+### Installing from CRAN
+
+`rrd` is not yet on CRAN
+
+### Installing from github
 
 And the development version from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("andrie/Rrd")
+devtools::install_github("andrie/rrd")
 ```
 
 Example
@@ -44,15 +47,13 @@ Example
 In R:
 
 ``` r
-library(Rrd)
+library(rrd)
 ```
 
-### Describe the contents of an RRD file:
-
-Use `describe_rrd()`:
+To describe the contents of an RRD file, use `describe_rrd()`:
 
 ``` r
-rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "Rrd")
+rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "rrd")
 
 describe_rrd(rrd_cpu_0)
 #> A RRD file with 10 RRA arrays and step size 60
@@ -68,13 +69,28 @@ describe_rrd(rrd_cpu_0)
 #> [10] MAX_86400 (1825 rows)
 ```
 
-### Read an entire RRD file:
-
-Use `read_rrd()`:
+To read an entire RRD file, i.e. all of the RRA archives, use `read_rrd()`. This returns a list of `tibble` objects:
 
 ``` r
 cpu <- read_rrd(rrd_cpu_0)
 
+str(cpu, max.level = 1)
+#> List of 10
+#>  $ AVERAGE60   :Classes 'tbl_df', 'tbl' and 'data.frame':    43199 obs. of  9 variables:
+#>  $ AVERAGE300  :Classes 'tbl_df', 'tbl' and 'data.frame':    25919 obs. of  9 variables:
+#>  $ MIN300      :Classes 'tbl_df', 'tbl' and 'data.frame':    25919 obs. of  9 variables:
+#>  $ MAX300      :Classes 'tbl_df', 'tbl' and 'data.frame':    25919 obs. of  9 variables:
+#>  $ AVERAGE3600 :Classes 'tbl_df', 'tbl' and 'data.frame':    8759 obs. of  9 variables:
+#>  $ MIN3600     :Classes 'tbl_df', 'tbl' and 'data.frame':    8759 obs. of  9 variables:
+#>  $ MAX3600     :Classes 'tbl_df', 'tbl' and 'data.frame':    8759 obs. of  9 variables:
+#>  $ AVERAGE86400:Classes 'tbl_df', 'tbl' and 'data.frame':    1824 obs. of  9 variables:
+#>  $ MIN86400    :Classes 'tbl_df', 'tbl' and 'data.frame':    1824 obs. of  9 variables:
+#>  $ MAX86400    :Classes 'tbl_df', 'tbl' and 'data.frame':    1824 obs. of  9 variables:
+```
+
+Since the resulting object is a list of `tibble`s, you can easily work with individual data frames:
+
+``` r
 names(cpu)
 #>  [1] "AVERAGE60"    "AVERAGE300"   "MIN300"       "MAX300"      
 #>  [5] "AVERAGE3600"  "MIN3600"      "MAX3600"      "AVERAGE86400"
@@ -101,9 +117,7 @@ tail(cpu$AVERAGE60$sys)
 #> [6] 0.0005689333
 ```
 
-### Read a single RRA archive from an RRD file
-
-Use `read_rra()`:
+To read a single RRA archive from an RRD file, use `read_rra()`:
 
 ``` r
 start_time <- as.POSIXct("2018-05-01") # timestamp with data in example
@@ -128,6 +142,18 @@ avg_60
 #> 10 2018-05-01 00:10:00 0.00516 0            0 0.995 0            0       0
 #> # ... with 1,430 more rows, and 1 more variable: stolen <dbl>
 ```
+
+And you can easily plot using your favourite packages:
+
+``` r
+library(ggplot2)
+ggplot(avg_60, aes(x = timestamp, y = user)) + 
+  geom_line() +
+  stat_smooth(method = "loess", span = 0.125, se = FALSE) +
+  ggtitle("CPU0 usage, data read from RRD file")
+```
+
+<img src="man/figures/README-unnamed-chunk-1-1.png" width="100%" />
 
 More information
 ----------------

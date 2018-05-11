@@ -30,7 +30,7 @@ The arguments \code{start} and \code{end} define the time-slice to be retrieved.
 The returned \code{data.frame} has the \code{timestamp} and the data stores as separate columns. The names of the data sources are extracted from the RRD file and set as column names. The timestamps are also used as row names.
 }
 \examples{
-rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "Rrd")
+rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "rrd")
 
 start_time <- as.POSIXct("2018-05-01") # timestamp with data in example
 end_time <- as.POSIXct("2018-05-02") # timestamp with data in example

@@ -1,13 +1,13 @@
-Package: Rrd
+Package: rrd
 Type: Package
 Title: Import Data from a RRD File into R
 Version: 0.1.0.9000
-Date: 2018-05-02
+Date: 2018-05-11
 Author: Plamen Dimitrov <dim.plamen@gmail.com>
 Maintainer: Andrie de Vries <apdevries@gmail.com>
 Description: Makes it easy to import the data from a RRD database directly into
    R data structures.
-SystemRequirements: librrd-dev, rrdtool and librrd4
+SystemRequirements: librrd-dev, rrdtool
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.0.1
 NeedsCompilation: yes

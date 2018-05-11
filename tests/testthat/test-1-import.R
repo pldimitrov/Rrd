@@ -3,8 +3,8 @@ if (interactive()) library(testthat)
 
 context("read_rrd")
 
-rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "Rrd")
-rrd_content_1 <- system.file("extdata/content-1.rrd", package = "Rrd")
+rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "rrd")
+rrd_content_1 <- system.file("extdata/content-1.rrd", package = "rrd")
 
 test_that("read_rrd rrd_cpu_0", {
 

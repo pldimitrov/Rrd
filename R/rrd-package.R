@@ -14,17 +14,17 @@
 #' You can also read a more in-depth description of the package in a [blog post](http://plamendimitrov.net/blog/2014/08/09/r-package-for-working-with-rrd-files/).
 #' 
 #' 
-#' @name Rrd-package
+#' @name rrd-package
 #' @docType package
 #' @author Plamen Dimitrov
 #' 
 #' Maintainer: Plamen Dimitrov <dim.plamen@@gmail.com>
 #' 
-#' @useDynLib Rrd, .registration = TRUE
+#' @useDynLib rrd, .registration = TRUE
 #'  
 # @seealso
 #' @references <http://oss.oetiker.ch/rrdtool/doc/index.en.html>
-#' @references <https://github.com/pldimitrov/Rrd>
+#' @references <https://github.com/pldimitrov/rrd>
 #' 
 #' @keywords package rrd rrdtool librrd
 #' 

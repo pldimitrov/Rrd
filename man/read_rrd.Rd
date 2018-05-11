@@ -16,7 +16,7 @@ Returns a named list of data.frames. Each data frame corresponds to an RRA (see 
 Reads the metadata in the RRD and adjusts the parameters accordingly in order to expose all RRAs in their entirety.
 }
 \examples{
-rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "Rrd")
+rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "rrd")
 
 describe_rrd(rrd_cpu_0)
 

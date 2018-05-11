@@ -1,4 +1,4 @@
-rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "Rrd")
+rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "rrd")
 
 start_time <- as.POSIXct("2018-05-01") # timestamp with data in example
 end_time <- as.POSIXct("2018-05-02") # timestamp with data in example
