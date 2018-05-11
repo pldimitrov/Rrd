@@ -33,9 +33,9 @@ test_that("read_rrd rrd_content_1", {
   
 })
 
-test_that("read_rra from rrd_content_1", {
+test_that("read_rra from rrd_content_1 using start time", {
   
-  z <- read_rra(rrd_content_1, "MAX", Sys.time() - 86400, Sys.time(), step = 1L)
+  z <- read_rra(rrd_content_1, "MAX", start = Sys.time() - 86400, end = Sys.time(), step = 300L)
   expect_is(z, "data.frame")
   expect_equal(nrow(z), 288)
   expect_equal(ncol(z), 4)
@@ -44,4 +44,17 @@ test_that("read_rra from rrd_content_1", {
     c("timestamp", "sessions", "procs", "http")
   )
   
+})
+
+test_that("read_rra from rrd_content_1 using n_rows", {
+
+  z <- read_rra(rrd_content_1, "MAX", n_steps = 10, end = Sys.time(), step = 300L)
+  expect_is(z, "data.frame")
+  expect_equal(nrow(z), 10)
+  expect_equal(ncol(z), 4)
+  expect_equal(
+    names(z),
+    c("timestamp", "sessions", "procs", "http")
+  )
+
 })

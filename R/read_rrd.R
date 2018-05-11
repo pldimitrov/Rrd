@@ -57,16 +57,35 @@ describe_rrd <- function(filename){
 #' @family rrd functions
 #'
 #' @example inst/examples/example_read_rra.R
-read_rra <- function(filename, cf, start, end, step){
+read_rra <- function(filename, cf, step, n_steps, start, end = Sys.time()){
   assert_that(is.character(cf))
   assert_that(cf %in% c("AVERAGE", "MIN", "MAX", "LAST"))
-  assert_that(is.time(start))
   assert_that(is.time(end))
-  assert_that(is.integer(step))
+  assert_that(is.numeric(step))
+  assert_that(is.integer(as.integer(step)))
+  
+  if (
+    (missing(start) || is.null(start)) && 
+    (missing(n_steps) || is.null(n_steps))
+  ) {
+    stop("You must specify one of n_steps or start")
+  }
+  
+  if (missing(start) || is.null(start)) {
+    assert_that(is.numeric(n_steps))
+    assert_that(n_steps > 0)
+    start <- end - (n_steps * step)
+  }
+  
+  if (missing(n_steps) || is.null(n_steps)) {
+    assert_that(is.time(start))
+    assert_that(start < end)
+  }
   
   filename <- normalizePath(filename)
   start <- as.numeric(start)
   end <- as.numeric(end)
+  step <- as.integer(step)
   
   cf <- match.arg(cf, c("AVERAGE", "MIN", "MAX", "LAST"))
   dat <- .import_rrd(filename, cf, start, end, step)
