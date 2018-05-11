@@ -11,7 +11,7 @@ directly into R data structures without using intermediate formats.
 \details{
 Exposes two functions:
 \itemize{
-\item \code{\link[=read_rrd]{read_rrd()}} to read an entire RRD file
+\item \code{\link[=read_rrd]{read_rrd()}} to read an entire RRD file, including all the archives
 \item \code{\link[=read_rra]{read_rra()}} to extract a single RRA (round robin archive) from an RRD file
 \item \code{\link[=getVal]{getVal()}} to extract a single value
 }
@@ -24,11 +24,6 @@ You can also read a more in-depth description of the package in a \href{http://p
 \url{http://oss.oetiker.ch/rrdtool/doc/index.en.html}
 
 \url{https://github.com/pldimitrov/rrd}
-}
-\author{
-Plamen Dimitrov
-
-Maintainer: Plamen Dimitrov \href{mailto:dim.plamen@gmail.com}{dim.plamen@gmail.com}
 }
 \keyword{librrd}
 \keyword{package}

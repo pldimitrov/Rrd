@@ -4,18 +4,18 @@
 \alias{read_rra}
 \title{Imports the RRA data from an RRD database}
 \usage{
-read_rra(filename, cf, start, end, step)
+read_rra(filename, cf, step, n_steps, start, end = Sys.time())
 }
 \arguments{
 \item{filename}{File name}
 
 \item{cf}{The consolidation function that is applied to the data you want to fetch. Must be one of \code{c("AVERAGE", "MIN", "MAX", "LAST")}}
 
+\item{step}{step}
+
 \item{start}{start}
 
 \item{end}{end}
-
-\item{step}{step}
 }
 \description{
 Finds the RRA (round robin array) that best matches the \code{consolidation function} and the \code{step} and imports all values (from all data stores) in that RRA that are between timestamp \code{start} and \code{end}. Note that \code{start} is not included in the result.
@@ -32,8 +32,13 @@ The returned \code{data.frame} has the \code{timestamp} and the data stores as s
 \examples{
 rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "rrd")
 
+# Note that the default end time is the current time (Sys.time())
+# However, since the sample data is historic, specify the end time
+
 start_time <- as.POSIXct("2018-05-01") # timestamp with data in example
-end_time <- as.POSIXct("2018-05-02") # timestamp with data in example
+end_time <- as.POSIXct("2018-05-02")   # timestamp with data in example
+
+# read archive by specifying start time
 avg_60 <- read_rra(rrd_cpu_0, cf = "AVERAGE", step = 60L, 
                      start = start_time, 
                      end = end_time)
@@ -41,6 +46,12 @@ names(avg_60)
 head(avg_60)
 tail(avg_60)
 
+# read archive by specifying number of rows to retrieve
+avg_60 <- read_rra(rrd_cpu_0, cf = "AVERAGE", step = 60L, 
+                   n_rows = 5, 
+                   end = end_time)
+names(avg_60)
+avg_60
 }
 \seealso{
 Other rrd functions: \code{\link{describe_rrd}},

@@ -5,7 +5,7 @@
 #' 
 #' Exposes two functions:
 #' 
-#' * [read_rrd()] to read an entire RRD file
+#' * [read_rrd()] to read an entire RRD file, including all the archives
 #' * [read_rra()] to extract a single RRA (round robin archive) from an RRD file
 #' * [getVal()] to extract a single value
 #' 
@@ -16,9 +16,6 @@
 #' 
 #' @name rrd-package
 #' @docType package
-#' @author Plamen Dimitrov
-#' 
-#' Maintainer: Plamen Dimitrov <dim.plamen@@gmail.com>
 #' 
 #' @useDynLib rrd, .registration = TRUE
 #'  
