@@ -117,13 +117,13 @@ tail(cpu$AVERAGE60$sys)
 #> [6] 0.0005689333
 ```
 
-To read a single RRA archive from an RRD file, use `read_rra()`:
+To read a single RRA archive from an RRD file, use `read_rra()`. To use this function, you must specify several arguments that define the specific data to retrieve. This includes the consolidation function (e.g. "AVERAGE") and time step (e.g. 60), the `end` time. You must also specifiy either the `start` time, or the number of steps, `n_steps`.
+
+In this example, you extract the average for 1 minute periods (`step = 60`), for one entire day (`n_steps = 24 * 60`):
 
 ``` r
-start_time <- as.POSIXct("2018-05-01") # timestamp with data in example
 end_time <- as.POSIXct("2018-05-02") # timestamp with data in example
-avg_60 <- read_rra(rrd_cpu_0, cf = "AVERAGE", step = 60L, 
-                     start = start_time, 
+avg_60 <- read_rra(rrd_cpu_0, cf = "AVERAGE", step = 60, n_steps = 24 * 60,
                      end = end_time)
 
 avg_60
