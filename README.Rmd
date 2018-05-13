@@ -1,0 +1,125 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+# rrd
+
+The `rrd` package allows you to read data from an [RRD](http://oss.oetiker.ch/rrdtool/) database.
+
+Internally it uses [librrd](http://oss.oetiker.ch/rrdtool/doc/librrd.en.html) to import the binary data directly into R without exporting it to an intermediate format first.
+
+For an introduction to RRD database, see https://oss.oetiker.ch/rrdtool/tut/rrd-beginners.en.html
+
+## Installation
+
+
+### Pre-requisites
+
+In order to build the package from source you need [librrd](http://oss.oetiker.ch/rrdtool/doc/librrd.en.html).
+Installing [RRDtool](http://oss.oetiker.ch/rrdtool/) from your package manager will usually also install the library.
+
+In ubuntu:
+
+```sh
+sudo apt-get install rrdtool librrd-dev
+```
+
+In RHEL / CentOS:
+
+```sh
+sudo yum install rrdtool rrdtool-devel
+```
+
+### Installing from CRAN
+
+`rrd` is not yet on CRAN
+
+### Installing from github
+
+And the development version from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("andrie/rrd")
+```
+
+## Example
+
+
+In R:
+
+```{r load}
+library(rrd)
+```
+
+To describe the contents of an RRD file, use `describe_rrd()`:
+
+
+```{r describe}
+rrd_cpu_0 <- system.file("extdata/cpu-0.rrd", package = "rrd")
+
+describe_rrd(rrd_cpu_0)
+```
+
+
+To read an entire RRD file, i.e. all of the RRA archives, use `read_rrd()`. This returns a list of `tibble` objects:
+
+
+```{r rrd}
+cpu <- read_rrd(rrd_cpu_0)
+
+str(cpu, max.level = 1)
+```
+
+
+Since the resulting object is a list of `tibble`s, you can easily work with individual data frames:
+
+```{r inspect-rrd}
+names(cpu)
+
+cpu[[1]]
+
+tail(cpu$AVERAGE60$sys)
+```
+
+
+To read a single RRA archive from an RRD file, use `read_rra()`. To use this function, you must specify several arguments that define the specific data to retrieve. This includes the consolidation function (e.g. "AVERAGE") and time step (e.g. 60), the `end` time.  You must also specifiy either the `start` time, or the number of steps, `n_steps`.
+
+In this example, you extract the average for 1 minute periods (`step = 60`), for one entire day (`n_steps = 24 * 60`):
+
+```{r rra}
+end_time <- as.POSIXct("2018-05-02") # timestamp with data in example
+avg_60 <- read_rra(rrd_cpu_0, cf = "AVERAGE", step = 60, n_steps = 24 * 60,
+                     end = end_time)
+
+avg_60
+```
+
+And you can easily plot using your favourite packages:
+
+```{r, fig.height=3}
+library(ggplot2)
+ggplot(avg_60, aes(x = timestamp, y = user)) + 
+  geom_line() +
+  stat_smooth(method = "loess", span = 0.125, se = FALSE) +
+  ggtitle("CPU0 usage, data read from RRD file")
+```
+
+
+
+
+## More information
+
+For more information on `rrdtool` and the `rrd` format please refer to the official [rrdtool documentation](http://oss.oetiker.ch/rrdtool/doc/index.en.html) and [tutorials](http://oss.oetiker.ch/rrdtool/tut/index.en.html).
+
+You can read a more in-depth description of the package and more examples in this [blog post](http://plamendimitrov.net/blog/2014/08/09/r-package-for-working-with-rrd-files/).
