@@ -38,7 +38,7 @@ And the development version from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("andrie/rrd")
+devtools::install_github("pldimitrov/rrd")
 ```
 
 Example
